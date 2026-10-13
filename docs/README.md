@@ -10,9 +10,40 @@ Eloquent Salesforce lets you work with Salesforce objects the same way you work 
 
 This is the maintained continuation of [roblesterjr04/EloquentSalesForce](https://github.com/roblesterjr04/EloquentSalesForce), also known as ElSF.
 
-## Upgrading from the original package
+## New in version 3+
 
-Version 3 replaces `rob-lester-jr04/eloquent-sales-force` and keeps its class names, config file and facade working. See the [upgrade guide](https://github.com/SETechSolutions/eloquent-sales-force/blob/main/UPGRADE.md) for the steps and the behaviour changes.
+Coming from `rob-lester-jr04/eloquent-sales-force` 2.x? This section is all you need to read. Sections further down that are new or behave differently are marked with **New in version 3+** or **Changed in version 3+**.
+
+### Upgrading
+
+```bash
+composer remove rob-lester-jr04/eloquent-sales-force
+composer require setechsolutions/eloquent-sales-force -W
+```
+
+Your code keeps working: the `Lester\EloquentSalesForce\*` class names, the `eloquent_sf` config file, the `SObjects` facade and a `soql` connection in `config/database.php` are all still supported. Version 3 needs PHP 8.2+ and Laravel 12 or 13.
+
+### Check these in your application
+
+- **Values are escaped for you.** If you escaped quotes yourself before passing a value to `where()`, remove that, or the value is escaped twice. See [Where / Order By](#where--order-by).
+- **Date fields only accept dates.** A value compared against a date field must be a date, an ISO 8601 string or a date literal such as `LAST_N_DAYS:7`, and DateTime values are now converted to UTC. If your application's timezone is not UTC, date queries return different, correct, results. See [Dates](#dates).
+- **The sync webhook needs a secret.** `POST /api/syncObject/{id}` only exists when two-way sync is on, and requires `SF_SYNC_SECRET`. See [Local Sync](#local-sync).
+- **The login routes only exist for the WebServer flow.** See [Authentication](#authentication).
+- **The default foreign key of `hasMany` and `hasOne` is `AccountId`**, no longer `accountId`. Relationships that relied on the default now match eager-loaded records correctly. See [Relationships](#relationships).
+
+### What you can use now
+
+- `SObjects::fake()` to test your application without a Salesforce org. See [Testing your application](#testing-your-application).
+- `update()` on a query or a relation: `Lead::where(...)->update([...])`. See [Bulk Update](#bulk-update).
+- `count()`, `exists()`, `whereBetween()`, `whereYear()`, `whereMonth()` and `whereDay()`. See [Where / Order By](#where--order-by).
+- Date fields declared with `$casts`. See [Dates](#dates).
+- `join()` on custom objects, with the relationship name read from Salesforce. See [Relationships](#relationships).
+- Configuration through `SF_*` environment variables alone. See [Configuration](#configuration).
+- `insert()` accepts arrays and returns the models with their new IDs. See [Bulk Insert](#bulk-insert).
+- Queries appear in `DB::listen()`, Telescope and Debugbar. See [Logging](#logging).
+- Exceptions carry the Salesforce `errorCode` and `fields`. See [Errors](#errors).
+
+Also fixed: 15 to 18 character ID conversion, two-way sync, batch results, Laravel 12 and 13 support, and more. The details are in the [upgrade guide](https://github.com/SETechSolutions/eloquent-sales-force/blob/main/UPGRADE.md) and the [changelog](https://github.com/SETechSolutions/eloquent-sales-force/blob/main/CHANGELOG.md).
 
 # Getting Started
 
@@ -40,6 +71,8 @@ composer require setechsolutions/eloquent-sales-force
 Salesforce then shows you a Consumer Key and a Consumer Secret.
 
 ## Configuration
+
+> **New in version 3+:** the credentials can come from `SF_*` environment variables alone. The `soql` connection in `config/database.php` is still read.
 
 Add the credentials to your `.env` file:
 
@@ -69,6 +102,8 @@ It is published as `config/eloquent_sf.php`. Its `forrest` section accepts every
 > A `soql` entry in the `connections` array of `config/database.php`, which earlier versions asked for, still works and takes precedence over the environment variables.
 
 ## Model Setup
+
+> **Changed in version 3+:** models extend `SETechSolutions\EloquentSalesForce\Model`. Models that extend `Lester\EloquentSalesForce\Model` keep working.
 
 Generate a model:
 
@@ -174,6 +209,8 @@ public static function booted()
 
 ## Soft Deletes
 
+> **New in version 3+:** `usesSalesforceSoftDeletes()` for objects without an `IsDeleted` field.
+
 Salesforce moves deleted records to the recycle bin. The usual Eloquent methods query them:
 
 ```php
@@ -192,6 +229,8 @@ Salesforce cannot restore a record through the REST API, so `restore()` throws a
 Some objects, such as `User`, have no `IsDeleted` field. List them in `noSoftDeletesOn` in the config file, or override `usesSalesforceSoftDeletes()` on the model to return `false`.
 
 ## Columns
+
+> **Changed in version 3+:** a model with `$timestamps = false` no longer selects `CreatedDate` and `LastModifiedDate`.
 
 SOQL has no `SELECT *`. When a query does not name its fields, the package selects the fields of the object's compact layout, which costs an extra API call per query.
 
@@ -220,6 +259,8 @@ $fields = Lead::describe();
 ```
 
 ## Dates
+
+> **New in version 3+:** date fields can be declared with `$casts`. **Changed in version 3+:** DateTime values are converted to UTC, and date fields reject values that are not dates.
 
 `CreatedDate` and `LastModifiedDate` take the place of Laravel's `created_at` and `updated_at`. They are read as Carbon instances.
 
@@ -278,6 +319,8 @@ Lead::where('CreatedDate', '>', 'LAST_N_DAYS:30')->get();
 
 ## Where / Order By
 
+> **New in version 3+:** `count()`, `exists()`, `whereBetween()`, `whereYear()`, `whereMonth()`, `whereDay()`. **Changed in version 3+:** values are escaped for you; do not escape quotes yourself.
+
 ```php
 $contact = Contact::where('Email', 'test@test.com')->first();
 
@@ -305,6 +348,8 @@ Contact::whereRaw('Name like ?', [$search.'%'])->get();
 `paginate()` works, with one limit set by Salesforce: a query cannot skip more than 2,000 records, so the total is capped at 2,000.
 
 ## Relationships
+
+> **New in version 3+:** joins work on custom objects and the relationship name can be given. **Changed in version 3+:** the default foreign key is `AccountId`, no longer `accountId`.
 
 Define relationships the way you normally would:
 
@@ -392,6 +437,8 @@ $lead->save();
 ```
 
 ## Local Sync
+
+> **Changed in version 3+:** the webhook requires a shared secret, `db:sync` is now `salesforce:sync` (the old name still works), and two-way sync reads the mapped fields correctly.
 
 The `SyncsWithSalesforce` trait keeps a model in your own database in sync with a Salesforce object. You work with a local table, and the mapped fields are pushed to Salesforce whenever the model is created or updated.
 
@@ -555,6 +602,8 @@ $batch->run();
 
 ## Bulk Insert
 
+> **New in version 3+:** arrays of attributes are accepted, and the inserted models are returned with their IDs.
+
 ```php
 $leads = collect([
     new Lead(['LastName' => 'One', 'Company' => 'Acme']),
@@ -567,6 +616,8 @@ $inserted = Lead::insert($leads);
 Arrays of attributes work too. The inserted models are returned with their new IDs. Records are sent 200 at a time, the most Salesforce accepts per call.
 
 ## Bulk Update
+
+> **New in version 3+:** `update()` on a query or a relation. `SObjects::update()` returns the outcome per record.
 
 To update every record matching a query:
 
@@ -596,6 +647,8 @@ Model events are not fired for bulk operations.
 
 ## Bulk Delete
 
+> **New in version 3+:** returns the number of deleted records.
+
 ```php
 Lead::where('Email', 'like', '%@test.com')->delete();
 
@@ -608,6 +661,8 @@ Lead::truncate();
 The `SObjects` facade holds everything that is not tied to one model, and forwards any other call to the REST API. `SObjects::query()`, `SObjects::search()`, `SObjects::limits()`, `SObjects::sobjects()` and the other resources of [omniphx/forrest](https://github.com/omniphx/forrest) are all available.
 
 ## Authentication
+
+> **Changed in version 3+:** the login routes are only registered for the WebServer flow.
 
 `SObjects::authenticate()` makes sure a token exists and returns the token data. You do not need to call it yourself: requests authenticate when needed.
 
@@ -641,11 +696,15 @@ SObjects::convert('5003000000D8cuI'); // 5003000000D8cuIAAR
 
 ## Logging
 
+> **New in version 3+:** queries dispatch Laravel's `QueryExecuted` event.
+
 Queries and write operations are logged at the `info` level. Choose the log channel with `SOQL_LOG=` in your `.env` file, or set it to `false` to turn the logging off.
 
 Queries also dispatch Laravel's `QueryExecuted` event, so they appear in `DB::listen()`, Telescope and Debugbar. `SObjects::queryHistory()` returns everything that was sent during the current request.
 
 ## Errors
+
+> **New in version 3+:** this section.
 
 A failed request throws `SETechSolutions\EloquentSalesForce\Exceptions\RestAPIException`. Its `errorCode` and `fields` properties hold what Salesforce reported. Three errors have an exception class of their own, each extending `RestAPIException`:
 
@@ -656,6 +715,8 @@ A failed request throws `SETechSolutions\EloquentSalesForce\Exceptions\RestAPIEx
 # Testing
 
 ## Testing your application
+
+> **New in version 3+:** this section.
 
 `SObjects::fake()` replaces Salesforce with an in-memory fake for the rest of the test. No request leaves your application.
 

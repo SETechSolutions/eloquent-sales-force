@@ -72,16 +72,20 @@ class Lead extends Model
 
 ## Coming from the original package
 
-1. Replace the dependency:
+```bash
+composer remove rob-lester-jr04/eloquent-sales-force
+composer require setechsolutions/eloquent-sales-force -W
+```
 
-   ```bash
-   composer remove rob-lester-jr04/eloquent-sales-force
-   composer require setechsolutions/eloquent-sales-force
-   ```
+Your code keeps working: the `Lester\EloquentSalesForce\*` class names, the `eloquent_sf` config file, the `SObjects` facade and a `soql` connection in `config/database.php` are all still supported.
 
-2. That's it for most applications. `Lester\EloquentSalesForce\*` class names, the `eloquent_sf` config file, the `SObjects` facade and a `soql` connection in `config/database.php` all keep working.
+Worth knowing before you deploy:
 
-3. Read [UPGRADE.md](UPGRADE.md) for the handful of behaviour changes, most of them security fixes.
+- Values in queries are now escaped for you, so stop escaping quotes yourself.
+- Date comparisons use true UTC and only accept dates.
+- The sync webhook requires `SF_SYNC_SECRET`.
+
+Everything that is new or changed is on one page: **[New in version 3+](https://setechsolutions.github.io/eloquent-sales-force/#/?id=new-in-version-3)**. Step-by-step details are in [UPGRADE.md](UPGRADE.md).
 
 ## Documentation
 

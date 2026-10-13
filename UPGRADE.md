@@ -57,6 +57,8 @@ If you registered `Lester\EloquentSalesForce\ServiceProvider` by hand in `bootst
 ],
 ```
 
+**The default foreign key of `hasMany` and `hasOne` is `AccountId`.** It used to be `accountId`, which did not match the field names Salesforce returns, so eager loading found no related records. If you passed the foreign key explicitly, nothing changes.
+
 **Specific exceptions extend `RestAPIException`.** `MalformedQueryException`, `RequestLimitExceeded` and `UnableToLockRowException` can now be caught together, and carry the Salesforce `errorCode` and `fields`.
 
 **`SyncsWithSalesforce` no longer overrides `boot()`.** If your model defined its own `boot()` and worked around the trait's, you can remove the workaround.
