@@ -4,8 +4,7 @@
 
 [![Tests](https://github.com/SETechSolutions/eloquent-sales-force/actions/workflows/tests.yml/badge.svg)](https://github.com/SETechSolutions/eloquent-sales-force/actions/workflows/tests.yml)
 [![Latest Stable Version](https://img.shields.io/packagist/v/setechsolutions/eloquent-sales-force.svg)](https://packagist.org/packages/setechsolutions/eloquent-sales-force)
-[![Total Downloads](https://img.shields.io/packagist/dt/setechsolutions/eloquent-sales-force.svg)](https://packagist.org/packages/setechsolutions/eloquent-sales-force)
-[![License](https://img.shields.io/packagist/l/setechsolutions/eloquent-sales-force.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/SETechSolutions/eloquent-sales-force)](https://github.com/SETechSolutions/eloquent-sales-force/blob/main/LICENSE)
 
 # Eloquent Salesforce
 
