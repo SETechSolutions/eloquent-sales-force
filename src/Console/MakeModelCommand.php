@@ -89,10 +89,6 @@ class MakeModelCommand extends GeneratorCommand
     {
         $table = Str::snake(Str::pluralStudly(class_basename($this->argument('name'))));
 
-        if ($this->option('pivot')) {
-            $table = Str::singular($table);
-        }
-
         $this->call('make:migration', [
             'name' => "create_{$table}_table",
             '--create' => $table,
@@ -138,9 +134,7 @@ class MakeModelCommand extends GeneratorCommand
      */
     protected function getStub()
     {
-        return $this->option('pivot')
-                    ? $this->resolveStubPath('/stubs/model.pivot.stub')
-                    : $this->resolveStubPath('/stubs/model.stub');
+        return $this->resolveStubPath('/stubs/model.stub');
     }
 
     /**
@@ -151,7 +145,7 @@ class MakeModelCommand extends GeneratorCommand
      */
     protected function resolveStubPath($stub)
     {
-        return file_exists($customPath = $this->laravel->basePath(trim($stub, '/')))
+        return file_exists($customPath = $this->laravel->basePath('stubs/salesforce/'.basename($stub)))
                         ? $customPath
                         : __DIR__.$stub;
     }
@@ -181,7 +175,6 @@ class MakeModelCommand extends GeneratorCommand
             ['force', null, InputOption::VALUE_NONE, 'Create the class even if the model already exists'],
             ['migration', 'm', InputOption::VALUE_NONE, 'Create a new migration file for the model'],
             ['seed', 's', InputOption::VALUE_NONE, 'Create a new seeder file for the model'],
-            ['pivot', 'p', InputOption::VALUE_NONE, 'Indicates if the generated model should be a custom intermediate table model'],
             ['resource', 'r', InputOption::VALUE_NONE, 'Indicates if the generated controller should be a resource controller'],
             ['api', null, InputOption::VALUE_NONE, 'Indicates if the generated controller should be an API controller'],
         ];

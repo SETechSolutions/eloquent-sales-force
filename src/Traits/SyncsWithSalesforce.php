@@ -5,18 +5,19 @@ namespace Lester\EloquentSalesForce\Traits;
 use Lester\EloquentSalesForce\Facades\SObjects;
 use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
-use Lester\EloquentSalesForce\Observers\Syncronizer;
+use Lester\EloquentSalesForce\Observers\Synchronizer;
 use Lester\EloquentSalesForce\SalesForceObject;
 
 trait SyncsWithSalesforce
 {
     private $tempSyncObject = null;
 
-    public static function boot()
+    public static function bootSyncsWithSalesforce()
     {
-        parent::boot();
+        $observer = new Synchronizer;
 
-        self::observe(Syncronizer::class);
+        static::creating(fn ($model) => $observer->creating($model));
+        static::updating(fn ($model) => $observer->updating($model));
     }
 
     public function syncWithSalesforce()

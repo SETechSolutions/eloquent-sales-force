@@ -2,7 +2,7 @@
 
 namespace Lester\EloquentSalesForce\Observers;
 
-class Syncronizer
+class Synchronizer
 {
     public function creating($model)
     {

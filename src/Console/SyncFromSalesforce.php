@@ -3,8 +3,6 @@
 namespace Lester\EloquentSalesForce\Console;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
-use Symfony\Component\Console\Input\InputOption;
 
 class SyncFromSalesforce extends Command
 {
@@ -13,7 +11,14 @@ class SyncFromSalesforce extends Command
      *
      * @var string
      */
-    protected $name = 'db:sync';
+    protected $name = 'salesforce:sync';
+
+    /**
+     * The console command name aliases.
+     *
+     * @var array<int, string>
+     */
+    protected $aliases = ['db:sync'];
 
     /**
      * The console command description.
@@ -25,16 +30,19 @@ class SyncFromSalesforce extends Command
     /**
      * Execute the console command.
      *
-     * @return void
+     * @return int
      */
     public function handle()
     {
-        foreach($this->getModels() as $class) {
+        foreach ($this->getModels() as $class) {
             $collection = $class::whereNotNull((new $class)->getSalesforceIdField())->get();
+
             foreach ($collection as $model) {
                 $model->syncWithSalesforce();
             }
         }
+
+        return self::SUCCESS;
     }
 
     private function getModels()
