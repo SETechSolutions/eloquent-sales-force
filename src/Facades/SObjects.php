@@ -3,19 +3,56 @@
 namespace Lester\EloquentSalesForce\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Lester\EloquentSalesForce\Contracts\SalesforceClient;
 use Lester\EloquentSalesForce\Fakers\SObjectsFake;
 
+/**
+ * @method static mixed authenticate()
+ * @method static mixed authorize()
+ * @method static mixed callback()
+ * @method static string|null instanceUrl()
+ * @method static \Illuminate\Support\Collection update(\Illuminate\Support\Collection $collection, bool $allOrNone = false)
+ * @method static int collectionChunkSize()
+ * @method static mixed describe(string $object, string|null $key = null)
+ * @method static array objectFields(string $table, array $columns = ['*'])
+ * @method static \Lester\EloquentSalesForce\SalesForceObject object(array $attributes = [])
+ * @method static string convert(string $str)
+ * @method static \Illuminate\Support\Collection getPicklistValues(string $object, string $field)
+ * @method static \Lester\EloquentSalesForce\Database\SOQLBatch getBatch()
+ * @method static \Lester\EloquentSalesForce\Database\SOQLBatch runBatch()
+ * @method static void log(string $message, mixed $details = [], string $level = 'info')
+ * @method static bool isSalesForceId(mixed $str)
+ * @method static mixed versions()
+ * @method static \Illuminate\Support\Collection queryHistory()
+ * @method static mixed query(string $soql, array $options = [])
+ * @method static mixed queryAll(string $soql, array $options = [])
+ * @method static mixed next(string $nextUrl, array $options = [])
+ * @method static mixed sobjects(string $path, array $options = [])
+ * @method static mixed composite(string $path, array $options = [])
+ * @method static mixed search(string $sosl, array $options = [])
+ * @method static mixed limits(array $options = [])
+ * @method static mixed custom(string $uri, array $options = [])
+ *
+ * @see \Lester\EloquentSalesForce\SObjects
+ */
 class SObjects extends Facade
 {
-    public static function fake($jobsToFake = [])
+    /**
+     * Replace Salesforce with an in-memory fake for the rest of the test.
+     *
+     * @param  array<string, array<int, array<string, mixed>>>  $records  Records to return, keyed by object name.
+     */
+    public static function fake($records = []): SObjectsFake
     {
-        static::swap($fake = new SObjectsFake(static::getFacadeRoot()));
+        $fake = new SObjectsFake(is_array($records) ? $records : []);
+
+        static::getFacadeApplication()->instance(SalesforceClient::class, $fake);
 
         return $fake;
     }
 
-	protected static function getFacadeAccessor()
-	{
-		return 'sobjects';
-	}
+    protected static function getFacadeAccessor()
+    {
+        return 'sobjects';
+    }
 }

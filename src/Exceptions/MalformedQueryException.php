@@ -2,9 +2,4 @@
 
 namespace Lester\EloquentSalesForce\Exceptions;
 
-use Exception;
-
-class MalformedQueryException extends Exception
-{
-
-}
+class MalformedQueryException extends RestAPIException {}

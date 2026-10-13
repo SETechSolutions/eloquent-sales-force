@@ -2,9 +2,4 @@
 
 namespace Lester\EloquentSalesForce\Exceptions;
 
-use Exception;
-
-class RequestLimitExceeded extends Exception
-{
-
-}
+class RequestLimitExceeded extends RestAPIException {}
