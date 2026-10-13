@@ -2,6 +2,8 @@
 
 namespace Lester\EloquentSalesForce\Contracts;
 
+use Lester\EloquentSalesForce\Exceptions\RestAPIException;
+
 /**
  * The single boundary between this package and the Salesforce REST API.
  *
@@ -47,7 +49,7 @@ interface SalesforceClient
      * @param  array<int, mixed>  $arguments
      * @return mixed
      *
-     * @throws \Lester\EloquentSalesForce\Exceptions\RestAPIException
+     * @throws RestAPIException
      */
     public function call(string $method, array $arguments = []);
 }

@@ -6,6 +6,5 @@ use Lester\EloquentSalesForce\Model;
 
 class TestUser extends Model
 {
-	protected $table = 'User';
-
+    protected $table = 'User';
 }

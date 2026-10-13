@@ -5,6 +5,9 @@ namespace Lester\EloquentSalesForce\Exceptions;
 use Exception;
 use Throwable;
 
+/**
+ * @phpstan-consistent-constructor
+ */
 class RestAPIException extends Exception
 {
     /**

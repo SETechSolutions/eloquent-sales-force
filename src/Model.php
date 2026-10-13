@@ -3,6 +3,7 @@
 namespace Lester\EloquentSalesForce;
 
 use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Lester\EloquentSalesForce\Database\SOQLBuilder as Builder;
@@ -16,6 +17,8 @@ use Throwable;
  * @property string|null $Id
  * @property array<string, mixed>|null $sf_attributes
  * @property string|null $web_link
+ *
+ * @phpstan-consistent-constructor
  */
 abstract class Model extends EloquentModel
 {
@@ -193,7 +196,7 @@ abstract class Model extends EloquentModel
     {
         return array_values(array_unique(array_merge(
             parent::getDates(),
-            $this->dates ?? [],
+            $this->dates,
             $this->getShortDates()
         )));
     }
@@ -205,7 +208,7 @@ abstract class Model extends EloquentModel
      */
     public function getShortDates()
     {
-        return $this->shortDates ?? [];
+        return $this->shortDates;
     }
 
     /**
@@ -440,7 +443,7 @@ abstract class Model extends EloquentModel
      * @param  string|null  $foreignKey
      * @param  string|null  $ownerKey
      * @param  string|null  $relation
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function belongsTo($related, $foreignKey = null, $ownerKey = null, $relation = null)
     {

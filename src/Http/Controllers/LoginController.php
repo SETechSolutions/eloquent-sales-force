@@ -2,6 +2,7 @@
 
 namespace Lester\EloquentSalesForce\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Lester\EloquentSalesForce\Facades\SObjects;
 
@@ -20,7 +21,7 @@ class LoginController extends Controller
     /**
      * Handle the OAuth callback and store the tokens.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function callback()
     {

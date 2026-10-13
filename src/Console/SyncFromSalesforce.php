@@ -49,5 +49,4 @@ class SyncFromSalesforce extends Command
     {
         return config('eloquent_sf.syncTwoWayModels', []);
     }
-
 }

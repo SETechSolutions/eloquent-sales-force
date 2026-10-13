@@ -1,0 +1,85 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Calling the helper function ''value\(\)'' without a closure as the first argument simply returns the first argument without doing anything$#'
+			identifier: larastan.uselessConstructs.value
+			count: 1
+			path: src/Database/SOQLBuilder.php
+
+		-
+			message: '#^Method Lester\\EloquentSalesForce\\Database\\SOQLBuilder\:\:matchingRecords\(\) should return Illuminate\\Database\\Eloquent\\Collection\<int, Lester\\EloquentSalesForce\\Model\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Database/SOQLBuilder.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$foreignKey\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Database/SOQLHasOneOrMany.php
+
+		-
+			message: '#^Call to private method find\(\) of parent class Illuminate\\Database\\Eloquent\\Relations\\Relation\<Illuminate\\Database\\Eloquent\\Model,Illuminate\\Database\\Eloquent\\Model,mixed\>\.$#'
+			identifier: method.private
+			count: 1
+			path: src/Database/SOQLHasOneOrMany.php
+
+		-
+			message: '#^Call to private method where\(\) of parent class Illuminate\\Database\\Eloquent\\Relations\\Relation\<Illuminate\\Database\\Eloquent\\Model,Illuminate\\Database\\Eloquent\\Model,mixed\>\.$#'
+			identifier: method.private
+			count: 2
+			path: src/Database/SOQLHasOneOrMany.php
+
+		-
+			message: '#^PHPDoc tag @param for parameter \$model with type Illuminate\\Database\\Eloquent\\Model is not subtype of native type Lester\\EloquentSalesForce\\Model\.$#'
+			identifier: parameter.phpDocType
+			count: 2
+			path: src/Database/SOQLHasOneOrMany.php
+
+		-
+			message: '#^PHPDoc tag @param for parameter \$parent with type Illuminate\\Database\\Eloquent\\Model is not subtype of native type Lester\\EloquentSalesForce\\Model\.$#'
+			identifier: parameter.phpDocType
+			count: 1
+			path: src/Database/SOQLHasOneOrMany.php
+
+		-
+			message: '#^Parameter \#1 \$model of method Lester\\EloquentSalesForce\\Database\\SOQLHasOneOrMany\:\:setForeignAttributesForCreate\(\) expects Lester\\EloquentSalesForce\\Model, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Database/SOQLHasOneOrMany.php
+
+		-
+			message: '#^Parameter \#2 \$callback of method Illuminate\\Support\\Collection\<int,array\<string, array\<string, mixed\>\|string\|null\>\>\:\:when\(\) expects \(callable\(Illuminate\\Support\\Collection\<int, array\{type\: string, object\: string\|null, id\: string\|null, attributes\: array\<string, mixed\>, soql\: string\|null\}\>, string\)\: Illuminate\\Support\\Collection\<int, array\{type\: string, object\: string\|null, id\: string\|null, attributes\: array\<string, mixed\>, soql\: string\|null\}\>\)\|null, Closure\(mixed\)\: Illuminate\\Support\\Collection\<int, array\{type\: string, object\: string\|null, id\: string\|null, attributes\: array\<string, mixed\>, soql\: string\|null\}\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Fakers/SObjectsFake.php
+
+		-
+			message: '#^Parameter \#1 \$query of method Lester\\EloquentSalesForce\\Model\:\:newSOQLHasMany\(\) expects Lester\\EloquentSalesForce\\Database\\SOQLBuilder, Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Model.php
+
+		-
+			message: '#^Parameter \#1 \$query of method Lester\\EloquentSalesForce\\Model\:\:newSOQLHasOne\(\) expects Lester\\EloquentSalesForce\\Database\\SOQLBuilder, Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Model.php
+
+		-
+			message: '#^Return type \(Lester\\EloquentSalesForce\\Database\\SOQLHasMany\) of method Lester\\EloquentSalesForce\\Model\:\:hasMany\(\) should be compatible with return type \(Illuminate\\Database\\Eloquent\\Relations\\HasMany\<Illuminate\\Database\\Eloquent\\Model, \$this\(Illuminate\\Database\\Eloquent\\Model\)\>\) of method Illuminate\\Database\\Eloquent\\Model\:\:hasMany\(\)$#'
+			identifier: method.childReturnType
+			count: 1
+			path: src/Model.php
+
+		-
+			message: '#^Return type \(Lester\\EloquentSalesForce\\Database\\SOQLHasOne\) of method Lester\\EloquentSalesForce\\Model\:\:hasOne\(\) should be compatible with return type \(Illuminate\\Database\\Eloquent\\Relations\\HasOne\<Illuminate\\Database\\Eloquent\\Model, \$this\(Illuminate\\Database\\Eloquent\\Model\)\>\) of method Illuminate\\Database\\Eloquent\\Model\:\:hasOne\(\)$#'
+			identifier: method.childReturnType
+			count: 1
+			path: src/Model.php
+
+		-
+			message: '#^Trait Lester\\EloquentSalesForce\\Traits\\SyncsWithSalesforce is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: src/Traits/SyncsWithSalesforce.php

@@ -44,7 +44,7 @@ class SObjects extends Facade
      */
     public static function fake($records = []): SObjectsFake
     {
-        $fake = new SObjectsFake(is_array($records) ? $records : []);
+        $fake = new SObjectsFake((array) $records);
 
         static::getFacadeApplication()->instance(SalesforceClient::class, $fake);
 

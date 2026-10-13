@@ -6,7 +6,7 @@ use Lester\EloquentSalesForce\Model;
 
 class TestLead extends Model
 {
-	protected $table = 'Lead';
+    protected $table = 'Lead';
 
     public $columns = [
         'Custom_Text_Field__c',
@@ -28,13 +28,13 @@ class TestLead extends Model
     ];
 
     protected $shortDates = [
-        'Custom_Date_Field__c'
+        'Custom_Date_Field__c',
     ];
 
     public function tasks()
-	{
-		return $this->hasMany(TestTask::class, 'WhoId');
-	}
+    {
+        return $this->hasMany(TestTask::class, 'WhoId');
+    }
 
     public static function booted()
     {

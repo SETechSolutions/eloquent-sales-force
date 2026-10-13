@@ -8,6 +8,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Lester\EloquentSalesForce\Contracts\SalesforceClient;
+use Lester\EloquentSalesForce\Model;
 use PHPUnit\Framework\Assert as PHPUnit;
 use Throwable;
 
@@ -557,7 +558,7 @@ class SObjectsFake implements SalesforceClient
     /**
      * Assert the given models were updated through SObjects::update().
      *
-     * @param  Collection<int, \Lester\EloquentSalesForce\Model>  $collection
+     * @param  Collection<int, Model>  $collection
      */
     public function assertMassUpdate(Collection $collection): void
     {

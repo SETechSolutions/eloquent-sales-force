@@ -12,11 +12,12 @@ class SalesForceObject extends Model
 {
     /**
      * @param  array<string, mixed>  $attributes
+     * @param  string|null  $table
      */
-    public function __construct(array $attributes = [])
+    public function __construct(array $attributes = [], $table = null)
     {
-        if (isset($attributes['attributes']['type'])) {
-            $this->setTable($attributes['attributes']['type']);
+        if ($table = $table ?: ($attributes['attributes']['type'] ?? null)) {
+            $this->setTable($table);
         }
 
         parent::__construct($attributes);

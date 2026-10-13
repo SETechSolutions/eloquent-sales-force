@@ -7,6 +7,7 @@ use DateTimeZone;
 use Generator;
 use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Connection;
+use Illuminate\Database\Query\Grammars\Grammar;
 use InvalidArgumentException;
 use Lester\EloquentSalesForce\Facades\SObjects;
 
@@ -77,6 +78,8 @@ class SOQLConnection extends Connection
     {
         $this->all = (bool) $all;
 
+        // There is no PDO behind this connection.
+        /** @phpstan-ignore argument.type */
         parent::__construct(null, '', '', ['name' => 'soql', 'driver' => 'soql']);
 
         if (function_exists('app') && app()->bound('events')) {
@@ -95,7 +98,7 @@ class SOQLConnection extends Connection
     /**
      * Set the query grammar used by the connection.
      *
-     * @param  \Illuminate\Database\Query\Grammars\Grammar  $grammar
+     * @param  Grammar  $grammar
      * @return $this
      */
     public function setGrammar($grammar)

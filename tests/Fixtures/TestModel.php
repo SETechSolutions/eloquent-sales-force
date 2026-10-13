@@ -3,8 +3,8 @@
 namespace Lester\EloquentSalesForce\Tests\Fixtures;
 
 use Illuminate\Database\Eloquent\Model;
-use Lester\EloquentSalesForce\Traits\SyncsWithSalesforce;
 use Illuminate\Support\Str;
+use Lester\EloquentSalesForce\Traits\SyncsWithSalesforce;
 
 class TestModel extends Model
 {
@@ -15,7 +15,7 @@ class TestModel extends Model
     protected $fillable = [
         'email',
         'name',
-        'company'
+        'company',
     ];
 
     protected $salesForceFieldMap = [

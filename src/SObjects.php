@@ -199,7 +199,7 @@ class SObjects
 
     /**
      * @param  array<int, mixed>  $fields
-     * @param  array<int, string>  $columns
+     * @param  array<int, mixed>  $columns
      */
     private function collectLayoutFields(array $fields, array &$columns): void
     {

@@ -2,6 +2,7 @@
 
 namespace Lester\EloquentSalesForce\Database;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Lester\EloquentSalesForce\Database\SOQLBuilder as Builder;
@@ -46,7 +47,7 @@ class SOQLBatch extends Collection
      * The model a batched query was built for.
      *
      * @param  string  $key
-     * @return \Illuminate\Database\Eloquent\Model|null
+     * @return Model|null
      */
     public function class($key)
     {

@@ -10,7 +10,7 @@ use Lester\EloquentSalesForce\Facades\SObjects;
 use Lester\EloquentSalesForce\Model;
 
 /**
- * @property \Lester\EloquentSalesForce\Model $model
+ * @property Model $model
  */
 class SOQLBuilder extends Builder
 {
@@ -58,7 +58,7 @@ class SOQLBuilder extends Builder
      * Queue this query in the shared batch instead of running it now.
      *
      * @param  string|null  $tag
-     * @return $this
+     * @return SOQLBuilder
      */
     public function batch($tag = null)
     {
@@ -166,7 +166,7 @@ class SOQLBuilder extends Builder
 
         $query->aggregate = ['function' => 'count', 'columns' => ['Id']];
 
-        $row = (array) ($query->get()->first() ?? []);
+        $row = (array) ($query->get()[0] ?? []);
 
         return (int) ($row['aggregate'] ?? $row['expr0'] ?? 0);
     }
@@ -177,8 +177,8 @@ class SOQLBuilder extends Builder
      * Accepts model instances or plain attribute arrays and returns the
      * inserted models with their new IDs.
      *
-     * @param  iterable<int, \Lester\EloquentSalesForce\Model|array<string, mixed>>  $collection
-     * @return Collection<int, \Lester\EloquentSalesForce\Model>
+     * @param  iterable<int, Model|array<string, mixed>>  $collection
+     * @return Collection<int, Model>
      */
     public function insert($collection)
     {
@@ -284,7 +284,7 @@ class SOQLBuilder extends Builder
     /**
      * The records matching the query, loaded with their ID only.
      *
-     * @return \Illuminate\Database\Eloquent\Collection<int, \Lester\EloquentSalesForce\Model>
+     * @return \Illuminate\Database\Eloquent\Collection<int, Model>
      */
     protected function matchingRecords()
     {

@@ -32,7 +32,7 @@ class MakeModelCommand extends GeneratorCommand
     /**
      * Execute the console command.
      *
-     * @return void
+     * @return bool|null
      */
     public function handle()
     {
@@ -63,6 +63,8 @@ class MakeModelCommand extends GeneratorCommand
         if ($this->option('controller') || $this->option('resource') || $this->option('api')) {
             $this->createController();
         }
+
+        return null;
     }
 
     /**
@@ -121,7 +123,7 @@ class MakeModelCommand extends GeneratorCommand
         $modelName = $this->qualifyClass($this->getNameInput());
 
         $this->call('make:controller', array_filter([
-            'name'  => "{$controller}Controller",
+            'name' => "{$controller}Controller",
             '--model' => $this->option('resource') || $this->option('api') ? $modelName : null,
             '--api' => $this->option('api'),
         ]));

@@ -37,7 +37,7 @@ class ForrestClient implements SalesforceClient
      * The Forrest client, resolved lazily so configuration changes made
      * before the first request are honoured.
      *
-     * @return \Omniphx\Forrest\Client
+     * @return mixed
      */
     protected function forrest()
     {
