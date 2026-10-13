@@ -18,7 +18,7 @@ concurrency:
 jobs:
   tests:
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - ${{ matrix.dependencies }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     strategy:
       fail-fast: false
@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Check out the code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -54,7 +54,7 @@ jobs:
         run: composer require "laravel/framework:${{ matrix.laravel }}" --no-interaction --no-update
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
         with:
           dependency-versions: ${{ matrix.dependencies }}
 
@@ -63,11 +63,11 @@ jobs:
 
   quality:
     name: Code style and static analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Check out the code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -76,7 +76,7 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
 
       - name: Validate composer.json
         run: composer validate --strict

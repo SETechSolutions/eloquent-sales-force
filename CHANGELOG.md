@@ -6,6 +6,15 @@ Releases up to 2.16.0 were published as [`rob-lester-jr04/eloquent-sales-force`]
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-10-14
+
+The package code is identical to 3.0.0; only the CI setup changed.
+
+### Changed
+
+- CI runs on Ubuntu 26.04 with `actions/checkout` 7 and `ramsey/composer-install` 4, so no action runs on the deprecated Node.js 20 any more.
+- Dependabot groups GitHub Actions updates into a single pull request.
+
 ## [3.0.0] - 2026-10-14
 
 First release of the maintained continuation. See [UPGRADE.md](UPGRADE.md) for upgrade steps.
@@ -71,5 +80,6 @@ First release of the maintained continuation. See [UPGRADE.md](UPGRADE.md) for u
 - The unused `Exceptions\Handler` class.
 - Support for PHP below 8.2 and Laravel below 12.
 
-[Unreleased]: https://github.com/SETechSolutions/eloquent-sales-force/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/SETechSolutions/eloquent-sales-force/compare/v3.0.1...HEAD
+[3.0.1]: https://github.com/SETechSolutions/eloquent-sales-force/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/SETechSolutions/eloquent-sales-force/releases/tag/v3.0.0

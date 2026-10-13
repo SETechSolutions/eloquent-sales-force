@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   live:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: salesforce
 
     env:
@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Check out the code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -34,7 +34,7 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
 
       - name: Run the live tests
         run: vendor/bin/phpunit --testsuite Live
