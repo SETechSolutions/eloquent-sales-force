@@ -1,9 +1,9 @@
 /vendor
-/bootstrap
-/storage
-/.idea
-/node_modules
 /composer.lock
-/tests/cache
 /.env
+/.idea
+/.phpunit.cache
 /.phpunit.result.cache
+/tests/cache
+/node_modules
+.DS_Store
