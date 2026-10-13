@@ -1,11 +1,11 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Feature;
+namespace SETechSolutions\EloquentSalesForce\Tests\Feature;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestModel;
-use Lester\EloquentSalesForce\Tests\TestCase;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestModel;
+use SETechSolutions\EloquentSalesForce\Tests\TestCase;
 
 class LocalSyncTest extends TestCase
 {

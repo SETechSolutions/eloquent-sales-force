@@ -1,18 +1,9 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Feature;
+namespace SETechSolutions\EloquentSalesForce\Tests\Feature;
 
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
-use Lester\EloquentSalesForce\Clients\ForrestClient;
-use Lester\EloquentSalesForce\Contracts\SalesforceClient;
-use Lester\EloquentSalesForce\Exceptions\MalformedQueryException;
-use Lester\EloquentSalesForce\Exceptions\RequestLimitExceeded;
-use Lester\EloquentSalesForce\Exceptions\RestAPIException;
-use Lester\EloquentSalesForce\Exceptions\UnableToLockRowException;
-use Lester\EloquentSalesForce\Facades\SObjects;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestLead;
-use Lester\EloquentSalesForce\Tests\TestCase;
 use Mockery;
 use Mockery\MockInterface;
 use Omniphx\Forrest\Exceptions\MissingResourceException;
@@ -20,6 +11,15 @@ use Omniphx\Forrest\Exceptions\MissingTokenException;
 use Omniphx\Forrest\Exceptions\MissingVersionException;
 use Omniphx\Forrest\Exceptions\SalesforceException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use SETechSolutions\EloquentSalesForce\Clients\ForrestClient;
+use SETechSolutions\EloquentSalesForce\Contracts\SalesforceClient;
+use SETechSolutions\EloquentSalesForce\Exceptions\MalformedQueryException;
+use SETechSolutions\EloquentSalesForce\Exceptions\RequestLimitExceeded;
+use SETechSolutions\EloquentSalesForce\Exceptions\RestAPIException;
+use SETechSolutions\EloquentSalesForce\Exceptions\UnableToLockRowException;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestLead;
+use SETechSolutions\EloquentSalesForce\Tests\TestCase;
 
 class ForrestClientTest extends TestCase
 {

@@ -1,15 +1,15 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Fakers;
+namespace SETechSolutions\EloquentSalesForce\Fakers;
 
 use BadMethodCallException;
 use Closure;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Lester\EloquentSalesForce\Contracts\SalesforceClient;
-use Lester\EloquentSalesForce\Model;
 use PHPUnit\Framework\Assert as PHPUnit;
+use SETechSolutions\EloquentSalesForce\Contracts\SalesforceClient;
+use SETechSolutions\EloquentSalesForce\Model;
 use Throwable;
 
 /**

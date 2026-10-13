@@ -1,12 +1,12 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Feature;
+namespace SETechSolutions\EloquentSalesForce\Tests\Feature;
 
 use Illuminate\Support\Carbon;
-use Lester\EloquentSalesForce\Exceptions\MalformedQueryException;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestLead;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestObserver;
-use Lester\EloquentSalesForce\Tests\TestCase;
+use SETechSolutions\EloquentSalesForce\Exceptions\MalformedQueryException;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestLead;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestObserver;
+use SETechSolutions\EloquentSalesForce\Tests\TestCase;
 
 class ModelPersistenceTest extends TestCase
 {

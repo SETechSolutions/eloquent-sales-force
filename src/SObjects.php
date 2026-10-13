@@ -1,16 +1,16 @@
 <?php
 
-namespace Lester\EloquentSalesForce;
+namespace SETechSolutions\EloquentSalesForce;
 
 use Closure;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Lester\EloquentSalesForce\Clients\ForrestClient;
-use Lester\EloquentSalesForce\Contracts\SalesforceClient;
-use Lester\EloquentSalesForce\Database\SOQLBatch;
-use Lester\EloquentSalesForce\Exceptions\RestAPIException;
+use SETechSolutions\EloquentSalesForce\Clients\ForrestClient;
+use SETechSolutions\EloquentSalesForce\Contracts\SalesforceClient;
+use SETechSolutions\EloquentSalesForce\Database\SOQLBatch;
+use SETechSolutions\EloquentSalesForce\Exceptions\RestAPIException;
 use Throwable;
 
 class SObjects

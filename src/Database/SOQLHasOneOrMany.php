@@ -1,11 +1,11 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Database;
+namespace SETechSolutions\EloquentSalesForce\Database;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Lester\EloquentSalesForce\Model;
+use SETechSolutions\EloquentSalesForce\Model;
 
 abstract class SOQLHasOneOrMany extends Relation
 {

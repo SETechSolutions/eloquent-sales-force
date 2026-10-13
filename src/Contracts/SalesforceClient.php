@@ -1,8 +1,8 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Contracts;
+namespace SETechSolutions\EloquentSalesForce\Contracts;
 
-use Lester\EloquentSalesForce\Exceptions\RestAPIException;
+use SETechSolutions\EloquentSalesForce\Exceptions\RestAPIException;
 
 /**
  * The single boundary between this package and the Salesforce REST API.

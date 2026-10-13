@@ -1,16 +1,16 @@
 <?php
 
-namespace Lester\EloquentSalesForce;
+namespace SETechSolutions\EloquentSalesForce;
 
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use Lester\EloquentSalesForce\Database\SOQLBuilder as Builder;
-use Lester\EloquentSalesForce\Database\SOQLConnection;
-use Lester\EloquentSalesForce\Database\SOQLHasMany as HasMany;
-use Lester\EloquentSalesForce\Database\SOQLHasOne as HasOne;
-use Lester\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\Database\SOQLBuilder as Builder;
+use SETechSolutions\EloquentSalesForce\Database\SOQLConnection;
+use SETechSolutions\EloquentSalesForce\Database\SOQLHasMany as HasMany;
+use SETechSolutions\EloquentSalesForce\Database\SOQLHasOne as HasOne;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
 use Throwable;
 
 /**

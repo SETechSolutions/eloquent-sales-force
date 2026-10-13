@@ -1,6 +1,6 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Console;
+namespace SETechSolutions\EloquentSalesForce\Console;
 
 use Illuminate\Console\GeneratorCommand;
 use Illuminate\Support\Str;

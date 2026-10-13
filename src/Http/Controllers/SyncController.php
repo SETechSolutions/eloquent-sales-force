@@ -1,6 +1,6 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Http\Controllers;
+namespace SETechSolutions\EloquentSalesForce\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;

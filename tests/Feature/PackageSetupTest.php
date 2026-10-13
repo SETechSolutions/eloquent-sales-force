@@ -1,14 +1,14 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Feature;
+namespace SETechSolutions\EloquentSalesForce\Tests\Feature;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use Lester\EloquentSalesForce\Database\SOQLConnection;
-use Lester\EloquentSalesForce\Facades\SObjects;
-use Lester\EloquentSalesForce\ServiceProvider;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestLead;
-use Lester\EloquentSalesForce\Tests\TestCase;
+use SETechSolutions\EloquentSalesForce\Database\SOQLConnection;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\ServiceProvider;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestLead;
+use SETechSolutions\EloquentSalesForce\Tests\TestCase;
 
 class PackageSetupTest extends TestCase
 {

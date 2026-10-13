@@ -1,10 +1,10 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Fixtures;
+namespace SETechSolutions\EloquentSalesForce\Tests\Fixtures;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Lester\EloquentSalesForce\Traits\SyncsWithSalesforce;
+use SETechSolutions\EloquentSalesForce\Traits\SyncsWithSalesforce;
 
 class TestModel extends Model
 {

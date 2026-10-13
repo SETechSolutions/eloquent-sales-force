@@ -1,14 +1,14 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Database;
+namespace SETechSolutions\EloquentSalesForce\Database;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Lester\EloquentSalesForce\Facades\SObjects;
-use Lester\EloquentSalesForce\Model;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\Model;
 
 /**
  * @property Model $model
@@ -262,7 +262,7 @@ class SOQLBuilder extends Builder
     {
         $ids = $this->matchingRecords()->pluck('Id')->filter()->values();
 
-        foreach ($ids->chunk(\Lester\EloquentSalesForce\SObjects::COLLECTION_LIMIT) as $chunk) {
+        foreach ($ids->chunk(\SETechSolutions\EloquentSalesForce\SObjects::COLLECTION_LIMIT) as $chunk) {
             SObjects::composite('sobjects', [
                 'method' => 'delete',
                 'query' => [

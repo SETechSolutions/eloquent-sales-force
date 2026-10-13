@@ -1,16 +1,16 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Unit;
+namespace SETechSolutions\EloquentSalesForce\Tests\Unit;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
-use Lester\EloquentSalesForce\SalesForceObject;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestLead;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestTask;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestUser;
-use Lester\EloquentSalesForce\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use SETechSolutions\EloquentSalesForce\SalesForceObject;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestLead;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestTask;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestUser;
+use SETechSolutions\EloquentSalesForce\Tests\TestCase;
 
 class SoqlCompilationTest extends TestCase
 {

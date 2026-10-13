@@ -1,10 +1,10 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Traits;
+namespace SETechSolutions\EloquentSalesForce\Traits;
 
 use Illuminate\Support\Str;
-use Lester\EloquentSalesForce\Observers\Synchronizer;
-use Lester\EloquentSalesForce\SalesForceObject;
+use SETechSolutions\EloquentSalesForce\Observers\Synchronizer;
+use SETechSolutions\EloquentSalesForce\SalesForceObject;
 
 trait SyncsWithSalesforce
 {

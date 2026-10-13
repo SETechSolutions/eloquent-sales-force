@@ -1,16 +1,16 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Feature;
+namespace SETechSolutions\EloquentSalesForce\Tests\Feature;
 
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
-use Lester\EloquentSalesForce\Facades\SObjects;
-use Lester\EloquentSalesForce\SalesForceObject;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestLead;
-use Lester\EloquentSalesForce\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\SalesForceObject;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestLead;
+use SETechSolutions\EloquentSalesForce\Tests\TestCase;
 
 class SObjectsFacadeTest extends TestCase
 {

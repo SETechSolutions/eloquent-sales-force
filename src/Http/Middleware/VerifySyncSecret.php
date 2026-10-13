@@ -1,6 +1,6 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Http\Middleware;
+namespace SETechSolutions\EloquentSalesForce\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;

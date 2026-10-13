@@ -1,6 +1,6 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Live;
+namespace SETechSolutions\EloquentSalesForce\Tests\Live;
 
 use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
@@ -8,20 +8,20 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Lester\EloquentSalesForce\Database\SOQLBatch;
-use Lester\EloquentSalesForce\Exceptions\MalformedQueryException;
-use Lester\EloquentSalesForce\Exceptions\RestAPIException;
-use Lester\EloquentSalesForce\Facades\SObjects;
-use Lester\EloquentSalesForce\Http\Middleware\VerifySyncSecret;
-use Lester\EloquentSalesForce\SalesForceObject;
-use Lester\EloquentSalesForce\ServiceProvider;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestLead;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestModel;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestObserver;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestTask;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestUser;
 use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Group;
+use SETechSolutions\EloquentSalesForce\Database\SOQLBatch;
+use SETechSolutions\EloquentSalesForce\Exceptions\MalformedQueryException;
+use SETechSolutions\EloquentSalesForce\Exceptions\RestAPIException;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\Http\Middleware\VerifySyncSecret;
+use SETechSolutions\EloquentSalesForce\SalesForceObject;
+use SETechSolutions\EloquentSalesForce\ServiceProvider;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestLead;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestModel;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestObserver;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestTask;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestUser;
 
 /**
  * Runs against a real Salesforce org and creates and deletes Lead and Task

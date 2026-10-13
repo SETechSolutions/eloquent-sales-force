@@ -1,20 +1,20 @@
 <?php
 
-namespace Lester\EloquentSalesForce;
+namespace SETechSolutions\EloquentSalesForce;
 
 use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\Facades\Route;
-use Lester\EloquentSalesForce\Clients\ForrestClient;
-use Lester\EloquentSalesForce\Console\MakeModelCommand;
-use Lester\EloquentSalesForce\Console\SyncFromSalesforce;
-use Lester\EloquentSalesForce\Contracts\SalesforceClient;
-use Lester\EloquentSalesForce\Database\SOQLConnection;
-use Lester\EloquentSalesForce\Facades\SObjects as SObjectsFacade;
-use Lester\EloquentSalesForce\Http\Controllers\LoginController;
-use Lester\EloquentSalesForce\Http\Controllers\SyncController;
-use Lester\EloquentSalesForce\Http\Middleware\VerifySyncSecret;
 use Omniphx\Forrest\Providers\Laravel\Facades\Forrest;
 use Omniphx\Forrest\Providers\Laravel\ForrestServiceProvider;
+use SETechSolutions\EloquentSalesForce\Clients\ForrestClient;
+use SETechSolutions\EloquentSalesForce\Console\MakeModelCommand;
+use SETechSolutions\EloquentSalesForce\Console\SyncFromSalesforce;
+use SETechSolutions\EloquentSalesForce\Contracts\SalesforceClient;
+use SETechSolutions\EloquentSalesForce\Database\SOQLConnection;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects as SObjectsFacade;
+use SETechSolutions\EloquentSalesForce\Http\Controllers\LoginController;
+use SETechSolutions\EloquentSalesForce\Http\Controllers\SyncController;
+use SETechSolutions\EloquentSalesForce\Http\Middleware\VerifySyncSecret;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Http\Controllers;
+namespace SETechSolutions\EloquentSalesForce\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Lester\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
 
 class LoginController extends Controller
 {

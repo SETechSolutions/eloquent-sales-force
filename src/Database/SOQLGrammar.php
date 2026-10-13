@@ -1,14 +1,14 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Database;
+namespace SETechSolutions\EloquentSalesForce\Database;
 
 use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use Lester\EloquentSalesForce\Facades\SObjects;
-use Lester\EloquentSalesForce\Model;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\Model;
 
 class SOQLGrammar extends Grammar
 {

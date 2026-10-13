@@ -1,12 +1,12 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Database;
+namespace SETechSolutions\EloquentSalesForce\Database;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Lester\EloquentSalesForce\Database\SOQLBuilder as Builder;
-use Lester\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\Database\SOQLBuilder as Builder;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
 
 /**
  * A set of queries that are sent to Salesforce in a single composite call.

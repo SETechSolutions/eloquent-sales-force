@@ -1,6 +1,6 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Exceptions;
+namespace SETechSolutions\EloquentSalesForce\Exceptions;
 
 use Exception;
 use Throwable;

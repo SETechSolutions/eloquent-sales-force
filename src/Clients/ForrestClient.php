@@ -1,16 +1,16 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Clients;
+namespace SETechSolutions\EloquentSalesForce\Clients;
 
 use Illuminate\Contracts\Container\Container;
-use Lester\EloquentSalesForce\Contracts\SalesforceClient;
-use Lester\EloquentSalesForce\Exceptions\MalformedQueryException;
-use Lester\EloquentSalesForce\Exceptions\RequestLimitExceeded;
-use Lester\EloquentSalesForce\Exceptions\RestAPIException;
-use Lester\EloquentSalesForce\Exceptions\UnableToLockRowException;
 use Omniphx\Forrest\Exceptions\MissingResourceException;
 use Omniphx\Forrest\Exceptions\MissingTokenException;
 use Omniphx\Forrest\Exceptions\MissingVersionException;
+use SETechSolutions\EloquentSalesForce\Contracts\SalesforceClient;
+use SETechSolutions\EloquentSalesForce\Exceptions\MalformedQueryException;
+use SETechSolutions\EloquentSalesForce\Exceptions\RequestLimitExceeded;
+use SETechSolutions\EloquentSalesForce\Exceptions\RestAPIException;
+use SETechSolutions\EloquentSalesForce\Exceptions\UnableToLockRowException;
 use Throwable;
 
 /**

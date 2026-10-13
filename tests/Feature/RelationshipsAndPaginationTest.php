@@ -1,12 +1,12 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Feature;
+namespace SETechSolutions\EloquentSalesForce\Tests\Feature;
 
 use Illuminate\Pagination\LengthAwarePaginator;
-use Lester\EloquentSalesForce\Model;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestLead;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestTask;
-use Lester\EloquentSalesForce\Tests\TestCase;
+use SETechSolutions\EloquentSalesForce\Model;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestLead;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestTask;
+use SETechSolutions\EloquentSalesForce\Tests\TestCase;
 
 class RelationshipsAndPaginationTest extends TestCase
 {

@@ -1,13 +1,13 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Feature;
+namespace SETechSolutions\EloquentSalesForce\Tests\Feature;
 
 use Illuminate\Support\Carbon;
-use Lester\EloquentSalesForce\Database\SOQLBatch;
-use Lester\EloquentSalesForce\Facades\SObjects;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestLead;
-use Lester\EloquentSalesForce\Tests\Fixtures\TestTask;
-use Lester\EloquentSalesForce\Tests\TestCase;
+use SETechSolutions\EloquentSalesForce\Database\SOQLBatch;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestLead;
+use SETechSolutions\EloquentSalesForce\Tests\Fixtures\TestTask;
+use SETechSolutions\EloquentSalesForce\Tests\TestCase;
 
 class BulkOperationsTest extends TestCase
 {

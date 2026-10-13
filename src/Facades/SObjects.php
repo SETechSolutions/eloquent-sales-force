@@ -1,10 +1,10 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Facades;
+namespace SETechSolutions\EloquentSalesForce\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use Lester\EloquentSalesForce\Contracts\SalesforceClient;
-use Lester\EloquentSalesForce\Fakers\SObjectsFake;
+use SETechSolutions\EloquentSalesForce\Contracts\SalesforceClient;
+use SETechSolutions\EloquentSalesForce\Fakers\SObjectsFake;
 
 /**
  * @method static mixed authenticate()
@@ -15,11 +15,11 @@ use Lester\EloquentSalesForce\Fakers\SObjectsFake;
  * @method static int collectionChunkSize()
  * @method static mixed describe(string $object, string|null $key = null)
  * @method static array objectFields(string $table, array $columns = ['*'])
- * @method static \Lester\EloquentSalesForce\SalesForceObject object(array $attributes = [])
+ * @method static \SETechSolutions\EloquentSalesForce\SalesForceObject object(array $attributes = [])
  * @method static string convert(string $str)
  * @method static \Illuminate\Support\Collection getPicklistValues(string $object, string $field)
- * @method static \Lester\EloquentSalesForce\Database\SOQLBatch getBatch()
- * @method static \Lester\EloquentSalesForce\Database\SOQLBatch runBatch()
+ * @method static \SETechSolutions\EloquentSalesForce\Database\SOQLBatch getBatch()
+ * @method static \SETechSolutions\EloquentSalesForce\Database\SOQLBatch runBatch()
  * @method static void log(string $message, mixed $details = [], string $level = 'info')
  * @method static bool isSalesForceId(mixed $str)
  * @method static mixed versions()
@@ -33,7 +33,7 @@ use Lester\EloquentSalesForce\Fakers\SObjectsFake;
  * @method static mixed limits(array $options = [])
  * @method static mixed custom(string $uri, array $options = [])
  *
- * @see \Lester\EloquentSalesForce\SObjects
+ * @see \SETechSolutions\EloquentSalesForce\SObjects
  */
 class SObjects extends Facade
 {

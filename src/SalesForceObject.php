@@ -1,6 +1,6 @@
 <?php
 
-namespace Lester\EloquentSalesForce;
+namespace SETechSolutions\EloquentSalesForce;
 
 /**
  * An anonymous model for any Salesforce object, for use without a

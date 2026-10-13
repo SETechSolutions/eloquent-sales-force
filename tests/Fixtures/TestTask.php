@@ -1,8 +1,8 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Fixtures;
+namespace SETechSolutions\EloquentSalesForce\Tests\Fixtures;
 
-use Lester\EloquentSalesForce\Model;
+use SETechSolutions\EloquentSalesForce\Model;
 
 class TestTask extends Model
 {

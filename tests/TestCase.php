@@ -1,11 +1,11 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests;
+namespace SETechSolutions\EloquentSalesForce\Tests;
 
-use Lester\EloquentSalesForce\Facades\SObjects;
-use Lester\EloquentSalesForce\Fakers\SObjectsFake;
-use Lester\EloquentSalesForce\ServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\Fakers\SObjectsFake;
+use SETechSolutions\EloquentSalesForce\ServiceProvider;
 
 abstract class TestCase extends Orchestra
 {

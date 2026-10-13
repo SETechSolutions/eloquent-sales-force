@@ -1,6 +1,6 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Database;
+namespace SETechSolutions\EloquentSalesForce\Database;
 
 use DateTimeInterface;
 use DateTimeZone;
@@ -9,7 +9,7 @@ use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Grammars\Grammar;
 use InvalidArgumentException;
-use Lester\EloquentSalesForce\Facades\SObjects;
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
 
 /**
  * A database connection that speaks SOQL over the Salesforce REST API.

@@ -1,6 +1,6 @@
 <?php
 
-namespace Lester\EloquentSalesForce\Tests\Fixtures;
+namespace SETechSolutions\EloquentSalesForce\Tests\Fixtures;
 
 class TestObserver
 {
