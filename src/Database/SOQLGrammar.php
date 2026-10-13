@@ -2,323 +2,379 @@
 
 namespace Lester\EloquentSalesForce\Database;
 
-use Carbon\Carbon;
+use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\Grammars\Grammar;
-use Illuminate\Database\Query\JsonExpression;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Lester\EloquentSalesForce\Facades\SObjects;
-use Lester\EloquentSalesForce\ServiceProvider;
+use Lester\EloquentSalesForce\Model;
 
 class SOQLGrammar extends Grammar
 {
+    /**
+     * The model being queried, used to tell date fields from other fields.
+     *
+     * @var \Illuminate\Database\Eloquent\Model|null
+     */
     protected $model;
 
-	/**
-	 * The components that make up a select clause.
-	 *
-	 * @var array
-	 */
-	protected $selectComponents = [
-		'aggregate',
-		'columns',
-		'joins',
-		'from',
-		'wheres',
-		'groups',
-		'havings',
-		'orders',
-		'limit',
-		'offset',
-		'lock',
-        'for',
-	];
+    /**
+     * The components that make up a select clause.
+     *
+     * Joins are compiled before "from" because SOQL expresses them as
+     * sub-selects in the field list.
+     *
+     * @var array<int, string>
+     */
+    protected $selectComponents = [
+        'aggregate',
+        'columns',
+        'joins',
+        'from',
+        'wheres',
+        'groups',
+        'havings',
+        'orders',
+        'limit',
+        'offset',
+        'lock',
+    ];
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
     public function getModel()
     {
         return $this->model;
     }
 
+    /**
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return \Illuminate\Database\Eloquent\Model
+     */
     public function setModel($model)
     {
         $this->model = $model;
+
         return $model;
     }
 
-	/**
-	 * Wrap a single string in keyword identifiers.
-	 *
-	 * @param  string  $value
-	 * @return string
-	 */
-	protected function wrapValue($value)
-	{
-        return $value;
-	}
-
-	protected function unWrapValue($value)
-	{
-		return str_replace('`', '', $value);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 *
-	 * @param  \Illuminate\Database\Query\Builder  $query
-	 * @param  array  $where
-	 * @return string
-	 */
-	protected function whereBasic(Builder $query, $where)
-	{
-        if ($this->isDate($where['column'])) {
-            return $this->whereDate($query, $where);
-        }
-        // allow for "false" values to not be wrapped.
-		if (is_bool($where['value'])) {
-            return $this->whereBoolean($query, $where);
-		}
-
-        // allow for literal string values
-        if ($this->checkStringLiteral($where['value'])) {
-            return $this->whereLiteral($query, $where);
-        }
-
-        if (Str::contains(strtolower($where['operator']), 'not like')) {
-			return sprintf(
-				'(not %s like %s)',
-				$this->wrap($where['column']),
-				$this->parameter($where['value'])
-			);
-		}
-
-        return parent::whereBasic($query, $where);
-
-        //return $this->wrap($where['column']) . $where['operator'] . $this->parameter($where['value']);
-	}
-
-    protected function whereDate(Builder $query, $where)
+    /**
+     * SOQL identifiers are never quoted.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    protected function wrapValue($value)
     {
-        return $this->wrap($where['column']) . $where['operator'] . '?';
+        return $value;
     }
 
     /**
-     * Compile the "limit" portions of the query.
-     *
-     * @param  \Illuminate\Database\Query\Builder  $query
-     * @param  int  $limit
+     * @param  string  $value
      * @return string
+     */
+    protected function unWrapValue($value)
+    {
+        return str_replace('`', '', $value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function whereBasic(Builder $query, $where)
+    {
+        if ($placeholder = $this->datePlaceholder($where['column'], $where['value'])) {
+            return $this->wrap($where['column']).' '.$where['operator'].' '.$placeholder;
+        }
+
+        if (Str::contains(strtolower($where['operator']), 'not like')) {
+            return sprintf(
+                '(not %s like %s)',
+                $this->wrap($where['column']),
+                $this->parameter($where['value'])
+            );
+        }
+
+        return parent::whereBasic($query, $where);
+    }
+
+    /**
+     * Compile a "where date" clause.
+     *
+     * {@inheritDoc}
+     */
+    protected function whereDate(Builder $query, $where)
+    {
+        return $this->wrap($where['column']).' '.$where['operator'].' '
+            .$this->placeholderOrExpression($where['value'], SOQLConnection::DATE_PLACEHOLDER);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function whereDay(Builder $query, $where)
+    {
+        return $this->dateFunctionWhere('DAY_IN_MONTH', $where);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function whereMonth(Builder $query, $where)
+    {
+        return $this->dateFunctionWhere('CALENDAR_MONTH', $where);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function whereYear(Builder $query, $where)
+    {
+        return $this->dateFunctionWhere('CALENDAR_YEAR', $where);
+    }
+
+    /**
+     * Compile a comparison against a SOQL date function.
+     *
+     * @param  array<string, mixed>  $where
+     */
+    protected function dateFunctionWhere(string $function, array $where): string
+    {
+        return $function.'('.$this->wrap($where['column']).') '.$where['operator'].' '
+            .$this->placeholderOrExpression($where['value'], SOQLConnection::INTEGER_PLACEHOLDER);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function whereIn(Builder $query, $where)
+    {
+        if (! empty($where['values'])) {
+            return $this->wrap($where['column']).' in ('.$this->parameterize($where['values']).')';
+        }
+
+        // SOQL rejects an empty IN list; this matches no record instead.
+        return 'Id = null';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function whereNotIn(Builder $query, $where)
+    {
+        if (! empty($where['values'])) {
+            return $this->wrap($where['column']).' not in ('.$this->parameterize($where['values']).')';
+        }
+
+        // Nothing is excluded, so every record matches.
+        return 'Id != null';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function whereInRaw(Builder $query, $where)
+    {
+        if (! empty($where['values'])) {
+            return $this->wrap($where['column']).' in ('.implode(', ', array_map('intval', $where['values'])).')';
+        }
+
+        return 'Id = null';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function whereNotInRaw(Builder $query, $where)
+    {
+        if (! empty($where['values'])) {
+            return $this->wrap($where['column']).' not in ('.implode(', ', array_map('intval', $where['values'])).')';
+        }
+
+        return 'Id != null';
+    }
+
+    /**
+     * SOQL has no BETWEEN operator, so a range is compiled as two comparisons.
+     *
+     * {@inheritDoc}
+     */
+    protected function whereBetween(Builder $query, $where)
+    {
+        $column = $this->wrap($where['column']);
+
+        $values = array_values(Arr::flatten((array) $where['values']));
+
+        $min = $this->datePlaceholder($where['column'], $values[0] ?? null) ?: $this->parameter($values[0] ?? null);
+        $max = $this->datePlaceholder($where['column'], $values[1] ?? null) ?: $this->parameter($values[1] ?? null);
+
+        return ! empty($where['not'])
+            ? "({$column} < {$min} or {$column} > {$max})"
+            : "({$column} >= {$min} and {$column} <= {$max})";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function whereNotNull(Builder $query, $where)
+    {
+        return $this->wrap($where['column']).' <> NULL';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function whereNull(Builder $query, $where)
+    {
+        return $this->wrap($where['column']).' = NULL';
+    }
+
+    /**
+     * {@inheritDoc}
      */
     protected function compileLimit(Builder $query, $limit)
     {
         return 'limit '.(int) $limit;
     }
 
-    protected function isDate($column)
-    {
-        return in_array($column, $this->model->getDates());
-    }
-
     /**
-     * Get the appropriate query parameter place-holder for a value.
+     * Whether a field of the queried model holds a date or dateTime.
      *
-     * @param  mixed   $value
-     * @return string
-     */
-    public function parameter($value, $column = null)
-    {
-        if (is_int($value)) {
-            return '?';
-        }
-        if (SObjects::isSalesForceId($value) || is_string($value)) {
-            return "'?'";
-        }
-
-        return $this->isExpression($value) ? $this->getValue($value) : '?';
-    }
-
-	/**
-	 * {@inheritDoc}
-	 */
-	protected function whereIn(Builder $query, $where)
-	{
-        if (! empty($where['values'])) {
-            //dd($this->wrap($where['column']).' in ('.$this->parameterize($where['values']).')');
-            return $this->wrap($where['column']).' in ('.$this->parameterize($where['values']).')';
-        }
-
-        return 'Id = null';
-	}
-
-	/**
-	 * Compile the "join" portions of the query.
-	 *
-	 * @param  \Illuminate\Database\Query\Builder  $query
-	 * @param  array  $joins
-	 * @return string
-	 */
-	protected function compileJoins(Builder $query, $joins)
-	{
-		return collect($joins)->map(function($join) use ($query) {
-			$table = $join->table;
-
-			$columns = ServiceProvider::objectFields($table, $join->columns ?: ['*']);
-			$columns = collect($columns)->implode(',');
-
-			$table_p = $this->unWrapValue($this->grammarPlural($table));
-
-			$strQuery = "select $columns from {$table_p} ";
-			Arr::forget($join->wheres, 0);
-
-			if ($join->wheres) {
-				$strQuery .= $this->compileWheres($join);
-			}
-
-			$strQuery = trim(", ($strQuery)");
-
-			return $strQuery;
-		})->implode(' ');
-	}
-
-	/**
-	 * Format the where clause statements into one string.
-	 *
-	 * @param  \Illuminate\Database\Query\Builder  $query
-	 * @param  array  $sql
-	 * @return string
-	 */
-	protected function concatenateWhereClauses($query, $sql)
-	{
-		$conjunction = 'where';
-		return $conjunction . ' ' . $this->removeLeadingBoolean(implode(' ', $sql));
-	}
-
-	/**
-	 * Compile an aggregated select clause.
-	 *
-	 * @param  \Illuminate\Database\Query\Builder  $query
-	 * @param  array  $aggregate
-	 * @return string
-	 */
-	protected function compileAggregate(Builder $query, $aggregate)
-	{
-		$column = $this->columnize($aggregate['columns']);
-		// If the query has a "distinct" constraint, and we're not asking for all columns,
-		// we need to prepend "distinct" onto the column name so that the query takes
-		// it into account when it performs the aggregating operations on the data.
-		if ($query->distinct && $column !== '*') {
-			$column = 'distinct ' . $column;
-		}
-		return 'select ' . $aggregate['function'] . '(' . $column . ') aggregate';
-	}
-
-	/**
-	 * Modify plural to pluralize try to tries
-	 *
-	 * @param  [type] $string [description]
-	 * @return [type]         [description]
-	 */
-	private function grammarPlural($string)
-	{
-		if (Str::endsWith($string, 'try')) {
-			return Str::replaceLast('try', 'tries', $string);
-		}
-
-		return Str::plural($string);
-	}
-
-	/**
-	 * Compile a "where not null" clause.
-	 *
-	 * @param  \Illuminate\Database\Query\Builder  $query
-	 * @param  array  $where
-	 * @return string
-	 */
-	protected function whereNotNull(Builder $query, $where)
-	{
-		return $this->wrap($where['column']) . ' <> NULL';
-	}
-
-	protected function whereNull(Builder $query, $where)
-	{
-		return $this->wrap($where['column']) . ' = NULL';
-	}
-
-	/**
-	 * Define grammer for boolean where statements in SOQL
-	 * @param  Builder $query [description]
-	 * @param  [type]  $where [description]
-	 * @return [type]         [description]
-	 */
-	protected function whereBoolean(Builder $query, $where)
-	{
-		return $this->wrap($where['column']) . ' = ?';
-	}
-
-    /**
-     * @param Builder $query The query builder
-     * @param array $where The where array
-     * @return string
-     */
-    protected function whereLiteral(Builder $query, $where) {
-        return "{$this->wrap($where['column'])} {$where['operator']} {$where['value']}";
-    }
-
-    /**
-     * Check if the $string is a SOSQL String Literal
-     * List taken from: https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql_select_dateformats.htm
-     * @param $string
+     * @param  mixed  $column
      * @return bool
      */
-    protected function checkStringLiteral($string) {
-        // some literals use ':' in them, removing before checking
-        if (Str::contains($string, ":")) {
-            $string = explode(':', $string)[0];
+    protected function isDate($column)
+    {
+        if (! is_string($column) || ! $this->model) {
+            return false;
         }
-        // check against the array of literals
-        return in_array($string, [
-            "YESTERDAY",
-            "TODAY",
-            "TOMORROW",
-            "LAST_WEEK",
-            "THIS_WEEK",
-            "NEXT_WEEK",
-            "LAST_MONTH",
-            "THIS_MONTH",
-            "NEXT_MONTH",
-            "LAST_90_DAYS",
-            "NEXT_90_DAYS",
-            "LAST_N_DAYS",
-            "NEXT_N_DAYS",
-            "NEXT_N_WEEKS",
-            "LAST_N_WEEKS",
-            "NEXT_N_MONTHS",
-            "LAST_N_MONTHS",
-            "THIS_QUARTER",
-            "LAST_QUARTER",
-            "NEXT_QUARTER",
-            "NEXT_N_QUARTERS",
-            "LAST_N_QUARTERS",
-            "THIS_YEAR",
-            "LAST_YEAR",
-            "NEXT_YEAR",
-            "NEXT_N_YEARS",
-            "LAST_N_YEARS",
-            "THIS_FISCAL_QUARTER",
-            "LAST_FISCAL_QUARTER",
-            "NEXT_FISCAL_QUARTER",
-            "NEXT_N_FISCAL_​QUARTERS",
-            "LAST_N_FISCAL_​QUARTERS",
-            "THIS_FISCAL_YEAR",
-            "LAST_FISCAL_YEAR",
-            "NEXT_FISCAL_YEAR",
-            "NEXT_N_FISCAL_​YEARS",
-            "LAST_N_FISCAL_​YEARS",
-        ]);
+
+        return $this->model instanceof Model
+            ? $this->model->isSalesforceDate($column)
+            : in_array($column, $this->model->getDates(), true);
     }
 
     /**
-     * Get the format for database stored dates.
+     * Whether a field of the queried model holds a date without a time.
+     *
+     * @param  mixed  $column
+     */
+    protected function isDateOnly($column): bool
+    {
+        return is_string($column)
+            && $this->model instanceof Model
+            && $this->model->isSalesforceDateOnly($column);
+    }
+
+    /**
+     * The placeholder to use when a value must be written as a SOQL date
+     * rather than as a quoted string, or null when it is an ordinary value.
+     *
+     * @param  mixed  $column
+     * @param  mixed  $value
+     */
+    protected function datePlaceholder($column, $value): ?string
+    {
+        // Expressions are inlined by the query builder and have no binding.
+        if ($value instanceof Expression) {
+            return null;
+        }
+
+        if ($this->isDateOnly($column)) {
+            return SOQLConnection::DATE_PLACEHOLDER;
+        }
+
+        // Date literals such as THIS_WEEK are honoured on any field, since
+        // custom date fields are often not declared on the model.
+        if ($this->isDate($column) || SOQLConnection::isDateLiteral($value)) {
+            return SOQLConnection::DATETIME_PLACEHOLDER;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  mixed  $value
+     */
+    protected function placeholderOrExpression($value, string $placeholder): string
+    {
+        return $value instanceof Expression ? (string) $this->getValue($value) : $placeholder;
+    }
+
+    /**
+     * Compile the "join" portions of the query as SOQL child sub-selects.
+     *
+     * {@inheritDoc}
+     */
+    protected function compileJoins(Builder $query, $joins)
+    {
+        return collect($joins)->map(function ($join) {
+            $table = $join->table;
+
+            $columns = collect(SObjects::objectFields($table, $join->columns ?: ['*']))->implode(',');
+
+            $relationship = $this->unWrapValue($this->grammarPlural($table));
+
+            $subselect = "select $columns from {$relationship}";
+
+            // The first clause is the join condition, which SOQL infers from
+            // the relationship itself.
+            Arr::forget($join->wheres, 0);
+
+            if ($join->wheres) {
+                $subselect .= ' '.$this->compileWheres($join);
+            }
+
+            return ", ($subselect)";
+        })->implode(' ');
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function concatenateWhereClauses($query, $sql)
+    {
+        return 'where '.$this->removeLeadingBoolean(implode(' ', $sql));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function compileAggregate(Builder $query, $aggregate)
+    {
+        $column = $this->columnize($aggregate['columns']);
+
+        // SOQL has no COUNT(*); counting the record ID is the equivalent.
+        if ($column === '*') {
+            $column = 'Id';
+        } elseif (is_array($query->distinct)) {
+            $column = 'distinct '.$this->columnize($query->distinct);
+        } elseif ($query->distinct) {
+            $column = 'distinct '.$column;
+        }
+
+        return 'select '.$aggregate['function'].'('.$column.') aggregate';
+    }
+
+    /**
+     * The name of the child relationship for an object: its plural.
+     *
+     * @param  string  $string
+     * @return string
+     */
+    private function grammarPlural($string)
+    {
+        if (Str::endsWith($string, 'try')) {
+            return Str::replaceLast('try', 'tries', $string);
+        }
+
+        return Str::plural($string);
+    }
+
+    /**
+     * Get the format for dateTime values in a query.
      *
      * @return string
      */
@@ -327,9 +383,11 @@ class SOQLGrammar extends Grammar
         return 'Y-m-d\TH:i:s\Z';
     }
 
-    public function compileLock($query, $value)
+    /**
+     * {@inheritDoc}
+     */
+    public function compileLock(Builder $query, $value)
     {
         return 'FOR UPDATE';
     }
-
 }

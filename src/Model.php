@@ -2,33 +2,23 @@
 
 namespace Lester\EloquentSalesForce;
 
-use Session;
-use Log;
-use Carbon\Carbon;
-use Illuminate\Support\Str;
-use Illuminate\Support\Arr;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Lester\EloquentSalesForce\Database\SOQLBuilder as Builder;
+use Lester\EloquentSalesForce\Database\SOQLConnection;
 use Lester\EloquentSalesForce\Database\SOQLHasMany as HasMany;
 use Lester\EloquentSalesForce\Database\SOQLHasOne as HasOne;
 use Lester\EloquentSalesForce\Facades\SObjects;
+use Throwable;
 
+/**
+ * @property string|null $Id
+ * @property array<string, mixed>|null $sf_attributes
+ * @property string|null $web_link
+ */
 abstract class Model extends EloquentModel
 {
-	protected $guarded = [];
-	protected $readonly = [];
-
-    protected $dateFormat = 'Y-m-d\TH:i:s.vO';
-
-    protected $dates = [
-        'CreatedDate',
-        'LastModifiedDate',
-    ];
-
-    public $custom_headers = [];
-
-    //public $timestamps = false;
-
     /**
      * The name of the "created at" column.
      *
@@ -43,84 +33,234 @@ abstract class Model extends EloquentModel
      */
     const UPDATED_AT = 'LastModifiedDate';
 
-	private $always_readonly = [
-		'Id',
-		'attributes',
-	];
+    protected $guarded = [];
+
+    /**
+     * Fields that are never sent to Salesforce on insert or update.
+     *
+     * @var array<int, string>
+     */
+    protected $readonly = [];
+
+    protected $dateFormat = 'Y-m-d\TH:i:s.vO';
+
+    /**
+     * Fields holding a date or dateTime.
+     *
+     * Declaring a "date" or "datetime" cast works just as well.
+     *
+     * @var array<int, string>
+     */
+    protected $dates = [
+        'CreatedDate',
+        'LastModifiedDate',
+    ];
+
+    /**
+     * Date fields that hold a date without a time (the Salesforce "Date"
+     * type), which are written and compared as YYYY-MM-DD.
+     *
+     * @var array<int, string>
+     */
+    protected $shortDates = [];
+
+    /**
+     * Extra HTTP headers sent with insert and update requests.
+     *
+     * @var array<string, string>
+     */
+    public $custom_headers = [];
 
     public $incrementing = false;
 
-    public $wasRecentlyCreated = false;
+    /**
+     * The fields selected when a query does not name any.
+     *
+     * When empty, the fields of the layout in eloquent_sf.layout are used.
+     *
+     * @var array<int, string>
+     */
+    public $columns = [];
 
-	public $columns = [];
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'Id';
 
-	/**
-	 * The primary key for the model.
-	 *
-	 * @var string
-	 */
-	protected $primaryKey = 'Id';
+    /**
+     * The "type" of the primary key.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
 
-	/**
-	 * The "type" of the auto-incrementing ID.
-	 *
-	 * @var string
-	 */
-	protected $keyType = 'string';
-
-	public function __construct(Array $attributes = [], $table = null)
-	{
-		parent::__construct($attributes);
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @param  string|null  $table
+     */
+    public function __construct(array $attributes = [], $table = null)
+    {
+        parent::__construct($attributes);
 
         if (isset($attributes['Id'])) {
             $this->exists = true;
         }
 
-		$this->table = $table ?: $this->table ?: class_basename($this);
-		$this->attributes['attributes'] = [
-			'type' => $this->table
-		];
-	}
+        $this->table = $table ?: $this->table ?: class_basename($this);
 
-	public function writeableAttributes($exclude = [])
-	{
-	    $fields = array_merge($this->readonly, $exclude);
-	    return Arr::except($this->attributes, $fields);
-	}
+        $this->attributes['attributes'] = [
+            'type' => $this->table,
+        ];
+    }
 
-	/*public static function create(array $attributes)
-	{
-		return (new static($attributes))->save();
-	}*/
+    /**
+     * The model's attributes without its read-only fields.
+     *
+     * @param  array<int, string>  $exclude
+     * @return array<string, mixed>
+     */
+    public function writeableAttributes($exclude = [])
+    {
+        return Arr::except($this->attributes, array_merge($this->readonly, $exclude));
+    }
 
-	/*public function update(array $attributes = array(), array $options = array())
-	{
+    /**
+     * The changed attributes in the form Salesforce expects them.
+     *
+     * @return array<string, mixed>
+     */
+    public function getSalesforceDirty()
+    {
+        return $this->toSalesforceValues($this->getDirty());
+    }
 
-		$this->attributes = array_merge(Arr::only($this->attributes, ['Id']), $attributes);
-		return $this->save($options);
-	}*/
+    /**
+     * Prepare attributes for a write request: drops the record ID, the
+     * metadata and read-only fields, and formats dates.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    public function toSalesforceValues(array $attributes)
+    {
+        $attributes = Arr::except($attributes, array_merge(['Id', 'attributes'], $this->readonly));
 
-	public function delete()
-	{
+        foreach ($attributes as $key => $value) {
+            if ($value !== null && $value !== '' && $this->isSalesforceDate($key)) {
+                $attributes[$key] = $this->asDateTime($value)->format(
+                    $this->isSalesforceDateOnly($key) ? 'Y-m-d' : $this->getDateFormat()
+                );
+            }
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * Whether a field holds a date or dateTime.
+     *
+     * @param  string  $key
+     */
+    public function isSalesforceDate($key): bool
+    {
+        return $this->isDateAttribute($key);
+    }
+
+    /**
+     * Whether a field holds a date without a time.
+     *
+     * @param  string  $key
+     */
+    public function isSalesforceDateOnly($key): bool
+    {
+        if (in_array($key, $this->getShortDates(), true)) {
+            return true;
+        }
+
+        $cast = $this->getCasts()[$key] ?? null;
+
+        return is_string($cast) && preg_match('/^(immutable_)?date(:|$)/', $cast) === 1;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return array<int, string>
+     */
+    public function getDates()
+    {
+        return array_values(array_unique(array_merge(
+            parent::getDates(),
+            $this->dates ?? [],
+            $this->getShortDates()
+        )));
+    }
+
+    /**
+     * The date fields that hold a date without a time.
+     *
+     * @return array<int, string>
+     */
+    public function getShortDates()
+    {
+        return $this->shortDates ?? [];
+    }
+
+    /**
+     * Whether queries for this object can select and filter on IsDeleted.
+     *
+     * Override this, or list the object in eloquent_sf.noSoftDeletesOn, for
+     * objects that have no IsDeleted field.
+     */
+    public function usesSalesforceSoftDeletes(): bool
+    {
+        return ! in_array($this->getTable(), (array) config('eloquent_sf.noSoftDeletesOn', ['User']), true);
+    }
+
+    /**
+     * Delete the record from Salesforce.
+     *
+     * @return bool
+     */
+    public function delete()
+    {
+        if (is_null($this->Id)) {
+            return false;
+        }
 
         if ($this->fireModelEvent('deleting') === false) {
             return false;
         }
 
-		try {
-			/** @scrutinizer ignore-call */
-			SObjects::sobjects($this->table . '/' . $this->Id, [
-				'method' => 'delete'
-			]);
-			SObjects::log("{$this->table} object {$this->Id} deleted.");
-            $this->fireModelEvent('deleted', false);
-			return true;
-		} catch (\Exception $e) {
-			SObjects::log("{$this->table} object {$this->Id} failed to delete.", (array)$e, 'warning');
-			return false;
-		}
-	}
+        try {
+            SObjects::sobjects($this->table.'/'.$this->Id, [
+                'method' => 'delete',
+            ]);
+        } catch (Throwable $e) {
+            SObjects::log("{$this->table} object {$this->Id} failed to delete.", [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+            ], 'warning');
 
+            return false;
+        }
+
+        SObjects::queryHistory()->push(['delete' => [$this->Id]]);
+
+        SObjects::log("{$this->table} object {$this->Id} deleted.");
+
+        $this->exists = false;
+
+        $this->fireModelEvent('deleted', false);
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function forceDelete()
     {
         return $this->delete();
@@ -138,53 +278,29 @@ abstract class Model extends EloquentModel
             return false;
         }
 
-        // If the model has an incrementing key, we can use the "insertGetId" method on
-        // the query builder, which will give us back the final inserted ID for this
-        // table from the database. Not all tables have to be incrementing though.
-        $attributes = method_exists($this, 'getAttributesForInsert') ? $this->getAttributesForInsert() : $this->getAttributes();
+        $attributes = $this->getSalesforceDirty();
 
-        $attributes = collect($this->getDirty())->map(function($field, $key) {
-            if ($this->isDateAttribute($key)) {
-                $carbon = new Carbon($field);
-                $format = $this->getDateFormat($key);
-                $field = $carbon->format($format);
-            }
-            return $field;
-        });
-
-        if (empty($attributes)) {
-            return $this;
-        }
-
-        SObjects::authenticate();
-        $object = $this->sfObject();
-
-        $result = SObjects::sobjects($object, [
-            'method' => 'post',
-            'body' => $attributes
-        ]);
+        $result = SObjects::sobjects($this->table, $this->writeOptions('post', $attributes));
 
         SObjects::queryHistory()->push(['insert' => $attributes]);
 
-        if (isset($result['success'])) {
-            if (isset($result['id'])) {
-                $this->Id = $result['id'];
-            }
-            //return $this;
-        } else {
+        if (empty($result['success'])) {
             return false;
         }
 
-        // We will go ahead and set the 'exists' property to true, so that it is set when
-        // the created event is fired, just in case the developer tries to update it
-        // during the event. This will allow them to do so and run an update here.
+        if (isset($result['id'])) {
+            $this->setAttribute('Id', $result['id']);
+        }
+
+        // The record now exists, so that an update made from a "created"
+        // listener is sent as an update.
         $this->exists = true;
 
         $this->wasRecentlyCreated = true;
 
         $this->fireModelEvent('created', false);
 
-        return $this;
+        return true;
     }
 
     /**
@@ -195,40 +311,16 @@ abstract class Model extends EloquentModel
      */
     protected function performUpdate($query)
     {
-        // If the updating event returns false, we will cancel the update operation so
-        // developers can hook Validation systems into their models and cancel this
-        // operation if the model does not pass validation. Otherwise, we update.
         if ($this->fireModelEvent('updating') === false) {
             return false;
         }
 
-        // Once we have run the update operation, we will fire the "updated" event for
-        // this model instance. This will allow developers to hook into these after
-        // models are updated, giving them a chance to do any special processing.
-        $dirty = collect($this->getDirty())->map(function($field, $key) {
-            if ($this->isDateAttribute($key)) {
-                $carbon = new Carbon($field);
-                $format = $this->getDateFormat();
-                $field = $carbon->format($format);
-            }
-            return $field;
-        });
+        $dirty = $this->getSalesforceDirty();
 
-        if ($dirty->count() > 0) {
+        if (count($dirty) > 0) {
+            SObjects::sobjects($this->table.'/'.$this->Id, $this->writeOptions('patch', $dirty));
 
-            SObjects::authenticate();
-            $object = $this->sfObject();
-
-            // The user can set this property on its models to set some custom value for the headers
-            $headers = $this->custom_headers ?: null;
-
-            $result = SObjects::sobjects($object, [
-                'method' => 'patch',
-                'body' => $dirty->toArray(),
-                'headers' => $headers
-            ]);
-
-            SObjects::queryHistory()->push(['update' => $dirty->toArray()]);
+            SObjects::queryHistory()->push(['update' => $dirty]);
 
             $this->syncChanges();
 
@@ -238,173 +330,250 @@ abstract class Model extends EloquentModel
         return true;
     }
 
-	private function sfObject()
-	{
-		/** @scrutinizer ignore-call */
-		return Arr::has($this->attributes, 'Id') ? $this->table . '/' . $this->Id : $this->table;
-	}
-
-	private function sfMethod()
-	{
-		return Arr::has($this->attributes, 'Id') ? 'patch' : 'post';
-	}
-
-	/**
-	 * Create a new Eloquent query builder for the model.
-	 *
-	 * @param  \Illuminate\Database\Query\Builder  $query
-	 * @return \Illuminate\Database\Eloquent\Builder|static
-	 */
-	public function newEloquentBuilder($query)
-	{
-		/** @scrutinizer ignore-call */
-		SObjects::authenticate();
-		return new Builder($query);
-	}
-
-	/**
-	 * Define a one-to-many relationship.
-	 *
-	 * @param  string  $related
-	 * @param  string  $foreignKey
-	 * @param  string  $localKey
-	 * @return \Lester\EloquentSalesForce\Database\SOQLHasMany
-	 */
-	public function hasMany($related, $foreignKey = null, $localKey = null)
-	{
-		$instance = $this->newRelatedInstance($related);
-		$foreignKey = $foreignKey ?: $this->getForeignKey();
-		$localKey = $localKey ?: $this->getKeyName();
-		return $this->newSOQLHasMany(
-			$instance->newQuery(), $this, $foreignKey, $localKey
-		);
-	}
-
-	public function hasOne($related, $foreignKey = null, $localKey = null)
-	{
-		$instance = $this->newRelatedInstance($related);
-		$foreignKey = $foreignKey ?: $this->getForeignKey();
-		$localKey = $localKey ?: $this->getKeyName();
-		return $this->newSOQLHasOne(
-			$instance->newQuery(), $this, $foreignKey, $localKey
-		);
-	}
-
-	/**
-	 * Define an inverse one-to-one or many relationship.
-	 *
-	 * @param  string  $related
-	 * @param  string  $foreignKey
-	 * @param  string  $ownerKey
-	 * @param  string  $relation
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-	 */
-	public function belongsTo($related, $foreignKey = null, $ownerKey = null, $relation = null)
-	{
-		// If no relation name was given, we will use this debug backtrace to extract
-		// the calling method's name and use that as the relationship name as most
-		// of the time this will be what we desire to use for the relationships.
-		if (is_null($relation)) {
-			$relation = $this->guessBelongsToRelation();
-		}
-		$instance = $this->newRelatedInstance($related);
-		// If no foreign key was supplied, we can use a backtrace to guess the proper
-		// foreign key name by using the name of the relationship function, which
-		// when combined with an "_id" should conventionally match the columns.
-		if (is_null($foreignKey)) {
-			$foreignKey = ucwords(Str::camel($relation . '_' . $instance->getKeyName()));
-		}
-
-		// Once we have the foreign key names, we'll just create a new Eloquent query
-		// for the related models and returns the relationship instance which will
-		// actually be responsible for retrieving and hydrating every relation.
-		$ownerKey = $ownerKey ?: $instance->getKeyName();
-		return $this->newBelongsTo(
-			$instance->newQuery(), $this, $foreignKey, $ownerKey, $relation
-		);
-	}
-
-	/**
-	 * Instantiate a new HasMany relationship.
-	 *
-	 * @param  \Illuminate\Database\Eloquent\Builder  $query
-	 * @param  \Illuminate\Database\Eloquent\Model  $parent
-	 * @param  string  $foreignKey
-	 * @param  string  $localKey
-	 * @return \Lester\EloquentSalesForce\Database\SOQLHasMany
-	 */
-	protected function newSOQLHasMany(Builder $query, Model $parent, $foreignKey, $localKey)
-	{
-		return new HasMany($query, $parent, $foreignKey, $localKey);
-	}
-
-	protected function newSOQLHasOne(Builder $query, Model $parent, $foreignKey, $localKey)
-	{
-		return new HasOne($query, $parent, $foreignKey, $localKey);
-	}
-
-	/**
-	 * Get the default foreign key name for the model.
-	 *
-	 * @return string
-	 */
-	public function getForeignKey()
-	{
-		return Str::camel(class_basename($this) . '_' . $this->getKeyName());
-	}
-
-	/**
-	 * [getSfAttributesAttribute description]
-	 * @return array
-	 */
-	public function getSfAttributesAttribute()
-	{
-		return Arr::get($this->attributes, 'attributes');
-	}
-
-	/**
-	 * [setSfAttributesAttribute description]
-	 * @param array $value [description]
-	 */
-	public function setSfAttributesAttribute(array $value)
-	{
-		$this->attributes['attributes'] = $value;
-	}
-
-	public function getWebLinkAttribute()
-	{
-		$instance = SObjects::instanceUrl();
-		return $instance ? rtrim($instance, '/') . Str::start($this->Id, '/') : null;
-	}
-
-	public function __toString()
-	{
-		return Arr::get($this->attributes, 'Id');
-	}
-
-	public static function columns()
-	{
-		return (new static([]))->columns;
-	}
-
-    public function trashed()
+    /**
+     * The request options for an insert or update.
+     *
+     * @param  array<string, mixed>  $body
+     * @return array<string, mixed>
+     */
+    protected function writeOptions(string $method, array $body): array
     {
-        return $this->IsDeleted ?? false;
+        $options = ['method' => $method, 'body' => $body];
+
+        if (! empty($this->custom_headers)) {
+            $options['headers'] = $this->custom_headers;
+        }
+
+        return $options;
     }
 
+    /**
+     * Mark a model as stored after a bulk insert returned its ID.
+     *
+     * @param  string  $id
+     * @return $this
+     */
+    public function markAsInserted($id)
+    {
+        $this->setAttribute('Id', $id);
+
+        $this->exists = true;
+        $this->wasRecentlyCreated = true;
+
+        return $this->syncOriginal();
+    }
+
+    /**
+     * A shared connection for anything that inspects the model's
+     * connection; each query gets a connection of its own.
+     *
+     * @return SOQLConnection
+     */
+    public function getConnection()
+    {
+        return app()->bound(SOQLConnection::class)
+            ? app(SOQLConnection::class)
+            : new SOQLConnection;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function newBaseQueryBuilder()
+    {
+        return (new SOQLConnection)->query();
+    }
+
+    /**
+     * Create a new Eloquent query builder for the model.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @return Builder
+     */
+    public function newEloquentBuilder($query)
+    {
+        return new Builder($query);
+    }
+
+    /**
+     * Define a one-to-many relationship.
+     *
+     * @param  string  $related
+     * @param  string|null  $foreignKey
+     * @param  string|null  $localKey
+     * @return HasMany
+     */
+    public function hasMany($related, $foreignKey = null, $localKey = null)
+    {
+        $instance = $this->newRelatedInstance($related);
+        $foreignKey = $foreignKey ?: $this->getForeignKey();
+        $localKey = $localKey ?: $this->getKeyName();
+
+        return $this->newSOQLHasMany(
+            $instance->newQuery(), $this, $foreignKey, $localKey
+        );
+    }
+
+    /**
+     * Define a one-to-one relationship.
+     *
+     * @param  string  $related
+     * @param  string|null  $foreignKey
+     * @param  string|null  $localKey
+     * @return HasOne
+     */
+    public function hasOne($related, $foreignKey = null, $localKey = null)
+    {
+        $instance = $this->newRelatedInstance($related);
+        $foreignKey = $foreignKey ?: $this->getForeignKey();
+        $localKey = $localKey ?: $this->getKeyName();
+
+        return $this->newSOQLHasOne(
+            $instance->newQuery(), $this, $foreignKey, $localKey
+        );
+    }
+
+    /**
+     * Define an inverse one-to-one or many relationship.
+     *
+     * @param  string  $related
+     * @param  string|null  $foreignKey
+     * @param  string|null  $ownerKey
+     * @param  string|null  $relation
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function belongsTo($related, $foreignKey = null, $ownerKey = null, $relation = null)
+    {
+        // If no relation name was given, we will use this debug backtrace to extract
+        // the calling method's name and use that as the relationship name as most
+        // of the time this will be what we desire to use for the relationships.
+        if (is_null($relation)) {
+            $relation = $this->guessBelongsToRelation();
+        }
+
+        $instance = $this->newRelatedInstance($related);
+
+        // Salesforce lookup fields are named after the relationship followed
+        // by the key, e.g. "AccountId" for an "account" relationship.
+        if (is_null($foreignKey)) {
+            $foreignKey = ucwords(Str::camel($relation.'_'.$instance->getKeyName()));
+        }
+
+        $ownerKey = $ownerKey ?: $instance->getKeyName();
+
+        return $this->newBelongsTo(
+            $instance->newQuery(), $this, $foreignKey, $ownerKey, $relation
+        );
+    }
+
+    /**
+     * Instantiate a new HasMany relationship.
+     *
+     * @param  string  $foreignKey
+     * @param  string  $localKey
+     * @return HasMany
+     */
+    protected function newSOQLHasMany(Builder $query, Model $parent, $foreignKey, $localKey)
+    {
+        return new HasMany($query, $parent, $foreignKey, $localKey);
+    }
+
+    /**
+     * Instantiate a new HasOne relationship.
+     *
+     * @param  string  $foreignKey
+     * @param  string  $localKey
+     * @return HasOne
+     */
+    protected function newSOQLHasOne(Builder $query, Model $parent, $foreignKey, $localKey)
+    {
+        return new HasOne($query, $parent, $foreignKey, $localKey);
+    }
+
+    /**
+     * Get the default foreign key name for the model, e.g. "AccountId".
+     *
+     * @return string
+     */
+    public function getForeignKey()
+    {
+        return Str::studly(class_basename($this)).$this->getKeyName();
+    }
+
+    /**
+     * The record's Salesforce metadata (type and URL).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getSfAttributesAttribute()
+    {
+        return Arr::get($this->attributes, 'attributes');
+    }
+
+    /**
+     * @param  array<string, mixed>  $value
+     * @return void
+     */
+    public function setSfAttributesAttribute(array $value)
+    {
+        $this->attributes['attributes'] = $value;
+    }
+
+    /**
+     * A link to the record in the Salesforce UI.
+     *
+     * @return string|null
+     */
+    public function getWebLinkAttribute()
+    {
+        $instance = SObjects::instanceUrl();
+
+        return $instance && $this->Id ? rtrim($instance, '/').Str::start($this->Id, '/') : null;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return (string) Arr::get($this->attributes, 'Id');
+    }
+
+    /**
+     * The default fields selected for this model.
+     *
+     * @return array<int, string>
+     */
+    public static function columns()
+    {
+        return (new static([]))->columns;
+    }
+
+    /**
+     * Whether the record is in the recycle bin.
+     *
+     * @return bool
+     */
+    public function trashed()
+    {
+        return (bool) ($this->IsDeleted ?? false);
+    }
+
+    /**
+     * @return never
+     *
+     * @throws \Exception
+     */
     public function restore()
     {
         throw new \Exception('The SalesForce Rest API does not natively support UNDELETE');
     }
 
+    /**
+     * @return bool
+     */
     public function getExistsAttribute()
     {
         return $this->Id !== null;
     }
-
-    public function getShortDates()
-    {
-        return $this->shortDates;
-    }
-
 }

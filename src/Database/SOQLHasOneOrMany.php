@@ -3,7 +3,6 @@
 namespace Lester\EloquentSalesForce\Database;
 
 use Lester\EloquentSalesForce\Model;
-use Lester\EloquentSalesForce\Facades\SObjects;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -45,8 +44,6 @@ abstract class SOQLHasOneOrMany extends Relation
 
 		$this->localKey = $localKey;
 		$this->foreignKey = $foreignKey;
-
-		SObjects::authenticate(); // Solve intermittent "No Resources Available" Error --- Experimental.
 
 		parent::__construct($query, $parent);
 	}
@@ -319,10 +316,6 @@ abstract class SOQLHasOneOrMany extends Relation
 	 */
 	public function update(array $attributes)
 	{
-		if ($this->related->usesTimestamps() && !is_null($this->relatedUpdatedAt())) {
-			$attributes[$this->relatedUpdatedAt()] = $this->related->freshTimestampString();
-		}
-
 		return $this->query->update($attributes);
 	}
 
