@@ -1,126 +1,101 @@
-# ElSF - Eloquent for SalesForce
+# Eloquent Salesforce
 
-[![Actions Status](https://github.com/roblesterjr04/EloquentSalesForce/workflows/Tests/badge.svg)](https://github.com/roblesterjr04/EloquentSalesForce/actions)
-[![Latest Stable Version](https://img.shields.io/packagist/v/rob-lester-jr04/eloquent-sales-force.svg)](https://packagist.org/packages/rob-lester-jr04/eloquent-sales-force)
-[![Packagist](https://img.shields.io/packagist/dm/rob-lester-jr04/eloquent-sales-force.svg)](https://packagist.org/packages/rob-lester-jr04/eloquent-sales-force)
-[![Packagist](https://img.shields.io/packagist/l/rob-lester-jr04/eloquent-sales-force.svg)](https://packagist.org/packages/rob-lester-jr04/eloquent-sales-force)
+[![Tests](https://github.com/SETechSolutions/eloquent-sales-force/actions/workflows/tests.yml/badge.svg)](https://github.com/SETechSolutions/eloquent-sales-force/actions/workflows/tests.yml)
+[![Latest Stable Version](https://img.shields.io/packagist/v/setechsolutions/eloquent-sales-force.svg)](https://packagist.org/packages/setechsolutions/eloquent-sales-force)
+[![License](https://img.shields.io/packagist/l/setechsolutions/eloquent-sales-force.svg)](https://packagist.org/packages/setechsolutions/eloquent-sales-force)
 
 ## Overview
 
-Eloquent SalesForce, now known as ElSF /else-if/, is a package that allows you to interact with SalesForce objects in the same way you would interact with an Eloquent model in your local application. Simplifying the process of writing applications that leverage SalesForce APIs and data.
+Eloquent Salesforce lets you work with Salesforce objects the same way you work with Eloquent models in your own database. Queries are translated to SOQL and sent to the Salesforce REST API, and records come back as models.
 
-## Updating
+This is the maintained continuation of [roblesterjr04/EloquentSalesForce](https://github.com/roblesterjr04/EloquentSalesForce), also known as ElSF.
 
-> Important notes for updating to 2.13
->
-> * the `protected $dates` array is now monitored appropriately
-> * All custom or additional date fields must be listed in this array. That means if it is overridden, you must include the `LastModifiedDate` and `CreatedDate` columns. This will ensure that dates are formatted as Carbon objects, and also that they are properly formatted in the queries being sent to SalesForce.
-> * The `push()` method on a SoqlBatch no longer conflicts with older versions of Laravel, but it also should not be used for batching. Instead, use `query()`.
+## Upgrading from the original package
+
+Version 3 replaces `rob-lester-jr04/eloquent-sales-force` and keeps its class names, config file and facade working. See the [upgrade guide](https://github.com/SETechSolutions/eloquent-sales-force/blob/main/UPGRADE.md) for the steps and the behaviour changes.
 
 # Getting Started
 
+## Requirements
+
+- PHP 8.2 or newer (8.3 or newer for Laravel 13)
+- Laravel 12 or 13
+
 ## Installation
 
-Install via composer
-
 ```bash
-composer require rob-lester-jr04/eloquent-sales-force
+composer require setechsolutions/eloquent-sales-force
 ```
 
-> Note: This package is only tested and supported Laravel 8.0 and up. It may still work as far back as 6.*, however testing is no longer performed.
+> A fresh Laravel 13 application ships with Guzzle 8, while the Salesforce client this package builds on still needs Guzzle 7. If Composer reports a conflict on `guzzlehttp/guzzle`, run the command with `-W` so it may switch to Guzzle 7, which Laravel 13 supports as well.
 
 ## Setting up your connected app
 
-1. Log into to your Salesforce org
-2. Click on Setup in the upper right-hand menu
-3. Under Build click `Create > Apps`
-4. Scroll to the bottom and click `New` under Connected Apps.
-5. Enter the following details for the remote application:
-	* Connected App Name
-	* API Name
-	* Contact Email
-	* Enable OAuth Settings under the API dropdown
-	* Callback URL
-	* Select access scope (If you need a refresh token, specify it here)
-6. Click `Save`
+1. Log in to your Salesforce org and open Setup.
+2. Go to **App Manager** and choose **New Connected App**.
+3. Fill in the name, API name and contact email.
+4. Enable **OAuth Settings**, enter a callback URL and select the access scopes you need. Select the refresh token scope if you use the WebServer flow.
+5. Save.
 
-After saving, you will now be given a Consumer Key and Consumer Secret. Update your config file with values for `consumerKey`, `consumerSecret`, and `loginURL`.
+Salesforce then shows you a Consumer Key and a Consumer Secret.
 
 ## Configuration
 
-In your `config/database.php` file, add the following driver to the connections array
+Add the credentials to your `.env` file:
 
-```php
-'soql' => [
-	'driver' => 'soql',
-	'database' => null,
-	'consumerKey'    => env('SF_CONSUMER_KEY'),
-	'consumerSecret' => env('SF_CONSUMER_SECRET'),
-	'loginURL'       => env('SF_LOGIN_URL'),
-	// Only required for UserPassword authentication:
-	'username'       => env('SF_USERNAME'),
-	// Security token might need to be ammended to password unless IP Address is whitelisted
-	'password'       => env('SF_PASSWORD')
-],
+```dotenv
+SF_CONSUMER_KEY=
+SF_CONSUMER_SECRET=
+SF_LOGIN_URL=https://login.salesforce.com
+
+# Only for the UserPassword flow, which is the default.
+SF_USERNAME=
+# Append your security token to the password unless your IP address is trusted.
+SF_PASSWORD=
 ```
 
-If you need to modify any more settings for Forrest, publish the config file using the `artisan` command:
+Use `https://test.salesforce.com` as the login URL for a sandbox.
+
+To choose another authentication flow, set `SF_AUTH_METHOD` to `WebServer`, `UserPasswordSoap`, `ClientCredentials` or `OAuthJWT`.
+
+To change any other setting, publish the config file:
 
 ```bash
-php artisan vendor:publish
+php artisan vendor:publish --tag=eloquent-sf-config
 ```
 
-You can find the config file in: `config/eloquent_sf.php`. Any of the same settings that Forrest recognizes will be available to set here.
+It is published as `config/eloquent_sf.php`. Its `forrest` section accepts every setting of [omniphx/forrest](https://github.com/omniphx/forrest), the REST client underneath.
+
+> A `soql` entry in the `connections` array of `config/database.php`, which earlier versions asked for, still works and takes precedence over the environment variables.
 
 ## Model Setup
 
-Create a model for the object you want to use, example:
+Generate a model:
 
 ```bash
-artisan make:model Lead
+php artisan make:salesforce Lead
 ```
 
-Open the model file, it will look like this:
+Or write one by hand. It is an Eloquent model that extends the package's base model:
 
 ```php
 <?php
 
-namespace App;
+namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class Lead extends Model
-{
-	//
-}
-```
-
-Replace the `use` statement so your model looks like:
-
-```php
-<?php
-
-namespace App;
-
-use Lester\EloquentSalesForce\Model;
+use SETechSolutions\EloquentSalesForce\Model;
 
 class Lead extends Model
 {
-	//
+    //
 }
 ```
 
-You can also use the new artisan command:
-
-```bash
-artisan make:salesforce Lead
-```
-
-This will generate the model as you see above without any changes necessary
+The class name is used as the Salesforce object name. Set `$table` if they differ; see [Custom Objects](#custom-objects).
 
 # The Basics
 
-ElSF was designed so even a junior Laravel developer could interact with SalesForce with ease and familiarity. One of the best features of Laravel is the Eloquent ORM. It is so easy to work with and to scale upon. Why can't interacting with a third party system be just as easy. Define your model as shown above, and begin treating it like a normal local eloquent model.
+Define a model as shown above and treat it like any Eloquent model.
 
 ## Queries
 
@@ -142,13 +117,13 @@ $lead->Company = 'Test';
 $lead->save();
 ```
 
-OR:
+Or:
 
 ```php
 $lead = Lead::create([
-	'FirstName' => 'Foo',
-	'LastName' => 'Bar',
-	'Company' => 'Test Company'
+    'FirstName' => 'Foo',
+    'LastName' => 'Bar',
+    'Company' => 'Test Company',
 ]);
 ```
 
@@ -160,13 +135,15 @@ $lead->LastName = 'Lester';
 $lead->save();
 ```
 
-OR:
+Or:
 
 ```php
 $lead->update([
-	'LastName' => 'Lester'
+    'LastName' => 'Lester',
 ]);
 ```
+
+Only the fields that changed are sent.
 
 ## Delete
 
@@ -176,64 +153,67 @@ $lead = Lead::first();
 $lead->delete();
 ```
 
-# Advanced Usage
+`delete()` returns `false` when Salesforce refuses the deletion.
 
-Many of the familiar advanced capabilities of Eloquent objects are available on the Eloquent SF Objects as well.
+# Advanced Usage
 
 ## Observers
 
-Eloquent SF Objects support the standard use of [Observers](https://laravel.com/docs/8.x/eloquent#observers) supported in Laravel. The following example is a static observer on the model, added in the `booted()` method.
+Model events and [observers](https://laravel.com/docs/eloquent#observers) work as they do in Laravel. The `creating`, `created`, `updating`, `updated`, `deleting` and `deleted` events are fired.
 
 ```php
-/* Lead Model */
+/* Lead model */
 public static function booted()
 {
-	// Example setting the phone number when creating the model.
-	static::creating(function ($lead) {
-		$lead->Phone = '1231231234';
-	});
+    // Set the phone number when the model is created.
+    static::creating(function ($lead) {
+        $lead->Phone = '1231231234';
+    });
 }
 ```
 
 ## Soft Deletes
 
-SalesForce already handles soft-deleting natively on every object. ElSF expose the traditional soft-delete methods that Eloquent has to query upon trashed elements.
+Salesforce moves deleted records to the recycle bin. The usual Eloquent methods query them:
 
 ```php
-
-/* Finding deleted items */
+/* Include deleted records */
 Lead::withTrashed()->where('Email', 'email@test.com')->get();
 
-/* Checking if an item is deleted */
-$lead->trashed()
+/* Check whether a record is deleted */
+$lead->trashed();
 
-/* Quering only deleted items */
+/* Only deleted records */
 Lead::onlyTrashed()->get();
-
 ```
+
+Salesforce cannot restore a record through the REST API, so `restore()` throws an exception.
+
+Some objects, such as `User`, have no `IsDeleted` field. List them in `noSoftDeletesOn` in the config file, or override `usesSalesforceSoftDeletes()` on the model to return `false`.
 
 ## Columns
 
-By default, the selected columns for the record will be the compact layout defined in the SalesForce instance. This is usually enough. If you need to pull specific columns, you have some options.
+SOQL has no `SELECT *`. When a query does not name its fields, the package selects the fields of the object's compact layout, which costs an extra API call per query.
+
+To avoid that call, and to control which fields you get, list them on the model:
 
 ```php
-// Per select
-$object = Contact::select('Id', 'Name')->get();
+public $columns = [
+    'Id',
+    'Name',
+    'Email',
+];
 ```
 
-You can also define on the model what columns you want to bring back with each record. Add `public $columns` to the top of the model.
+`CreatedDate`, `LastModifiedDate` and `IsDeleted` are added for you. Set `public $timestamps = false;` on the model if the object has no `CreatedDate` and `LastModifiedDate` fields.
+
+You can also choose fields per query:
 
 ```php
-...
-
-	public $columns = [
-		'Name',
-		'Id',
-		'Email',
-	];
+$contacts = Contact::select('Id', 'Name')->get();
 ```
 
-To return the columns currently available on a model, use the `describe` method on the object.
+To see which fields a model selects by default:
 
 ```php
 $fields = Lead::describe();
@@ -241,228 +221,276 @@ $fields = Lead::describe();
 
 ## Dates
 
-In Laravel, there are 2 very important date fields; `created_at` and `updated_at`. SalesForce models have the same, but the names are different. They are `CreatedDate` and `LastModifiedDate`, respectively.
+`CreatedDate` and `LastModifiedDate` take the place of Laravel's `created_at` and `updated_at`. They are read as Carbon instances.
 
-> There is no (native) equivalent to `deleted_at`.
+Salesforce is strict about how dates are written in queries: they are not quoted, and a `Date` field takes a different format than a `DateTime` field. The package handles this once it knows which fields hold dates. Declare them with casts:
 
 ```php
+protected $casts = [
+    'Last_Contacted__c' => 'datetime', // a DateTime field
+    'Birthdate' => 'date',             // a Date field
+];
+```
 
+The `$dates` and `$shortDates` properties of earlier versions still work. `$dates` lists date and dateTime fields, `$shortDates` the ones that hold a date without a time:
+
+```php
+protected $dates = [
+    'CreatedDate',
+    'LastModifiedDate',
+    'Last_Contacted__c',
+    'Birthdate',
+];
+
+protected $shortDates = [
+    'Birthdate',
+];
+```
+
+With that in place, pass dates as you would anywhere else:
+
+```php
 Lead::where('CreatedDate', '>=', today())->get();
 
-Lead::insert([
-  ...
-  'Custom_Date_Field__c' => now()
+Contact::where('Birthdate', '<', now()->subYears(18))->get();
+
+Lead::create([
+    'LastName' => 'Bar',
+    'Last_Contacted__c' => now(),
 ]);
-
 ```
 
-The abstract model declares `$dates` appropriately so that they are casted and queried correctly. If you have custom date columns you want to query on in this model, it is strongly recommended that you override this array and add those date fields. This is how ElSF knows what fields are dates and what fields are not, and SalesForce can be picky about how dates are passed in the queries.
+DateTime values are converted to UTC. On a field that is not declared, a `Carbon` or `DateTime` value is still written as a dateTime; use `whereDate()` to compare an undeclared `Date` field:
 
 ```php
-...
-
-  protected $dates = [
-    'CreatedDate',
-    'LastModifiedDate',
-  ];
-
+Lead::whereDate('Custom_Date_Field__c', '>', today())->get();
 ```
+
+[SOQL date literals](https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql_select_dateformats.htm) can be used as values:
 
 ```php
-...
+Lead::where('CreatedDate', 'THIS_WEEK')->get();
 
-  protected $dates = [
-    'CreatedDate',
-    'LastModifiedDate',
-    'Form_Fill_Date__c', // Our custom date field we want handled as a date
-  ];
-
+Lead::where('CreatedDate', '>', 'LAST_N_DAYS:30')->get();
 ```
 
-When you're working with `Date` types in SalesForce, instead of `DateTime` types, query your  model with `whereDate()` instead of `where()` - This will format your date values correctly when passing to SalesForce. This is required if working with a field in SalesForce that is expecting a short-date, ie `2010-01-01`.
-
-```php
-...
-  Lead::whereDate('Custom_Date_Field__c', '>', today())->get();
-
-```
-
-As SalesForce does not have a type of only `Time`, the native Laravel `whereTime()` query method will alias `where()` and query SalesForce as `DateTime`.
+`whereYear()`, `whereMonth()` and `whereDay()` use the SOQL calendar functions. Salesforce has no time-only type, so `whereTime()` behaves like `where()`.
 
 ## Where / Order By
-The `where` and `orderBy` methods work as usual as well.
 
 ```php
-$contacts = Contact::where('Email', 'test@test.com')->first();
+$contact = Contact::where('Email', 'test@test.com')->first();
 
 $contacts = Contact::where('Name', 'like', 'Donuts%')->get();
 
-$contacts = Contact::limit(20)->orderBy('Name')->get();
+$contacts = Contact::whereIn('Title', ['CEO', 'CTO'])->orderBy('Name')->limit(20)->get();
+
+$count = Contact::where('MailingCountry', 'France')->count();
+
+$exists = Contact::where('Email', 'test@test.com')->exists();
 ```
+
+You can filter on fields of a parent record with dot notation:
+
+```php
+Contact::where('Account.Industry', 'Banking')->get();
+```
+
+Values are escaped for you. Never build a condition by concatenating user input into `whereRaw()`; pass it as a binding instead:
+
+```php
+Contact::whereRaw('Name like ?', [$search.'%'])->get();
+```
+
+`paginate()` works, with one limit set by Salesforce: a query cannot skip more than 2,000 records, so the total is capped at 2,000.
 
 ## Relationships
 
-Relationships work the same way.
-
-Create a model like above for `Account` and `Contact`
-
-In the `Contact` model, add a method for a relationship like you normally would
+Define relationships the way you normally would:
 
 ```php
-## Contact.php
+// Contact.php
 public function account()
 {
-	return $this->belongsTo(Account::class);
+    return $this->belongsTo(Account::class);
 }
 ```
 
-So you can call now:
-
 ```php
-$contact = Contact::where('email', 'some@email.com')->first();
+$contact = Contact::where('Email', 'some@email.com')->first();
 $account = $contact->account;
 ```
 
-And the reverse is true
+And the reverse:
 
 ```php
-## Account.php
+// Account.php
 public function contacts()
 {
-	return $this->hasMany(Contact::class);
+    return $this->hasMany(Contact::class);
 }
 ```
 
 ```php
 $contacts = $account->contacts;
+
+$accounts = Account::with('contacts')->get();
 ```
 
-You are also able to use manual joins
+The foreign key defaults to the name Salesforce uses for a standard lookup: `AccountId` in the examples above. Pass the field name as the second argument for custom lookups:
+
+```php
+return $this->hasMany(TouchPoint::class, 'Contact__c');
+```
+
+You can also select child records in the same query with a join, which Salesforce calls a sub-select:
 
 ```php
 $account = Account::join('Contact', 'AccountId')->first();
+
+$contacts = $account->Contacts['records'];
 ```
 
-These aren't as easy to work with as **Relationships** because the SalesForce API still returns the array nested in the `records` property.
+The child records come back as arrays under the relationship name, not as models.
 
 ## ReadOnly Fields
 
-To specify fields on the model that are read-only and to force them to be excluded from any update/insert requests, define the `protected $readonly = []` array in the model
+Fields listed in `$readonly` are never sent in insert or update requests. Use it for formula fields and other fields you select but cannot write:
 
 ```php
-...
-
-	protected $readonly = [
-		'Name'
-	];
+protected $readonly = [
+    'Name',
+];
 ```
 
 ## Picklists
 
-If you are using a field that is a picklist in SalesForce, you can capture the values of that picklist from this function on the model.
+Get the values of a picklist field, keyed by value with the label as the item:
 
 ```php
+$statuses = $lead->getPicklistValues('Status');
 
-$statusValues = $lead->getPicklistValues('Status');
-
-// This is just a shortcut to the below...
+// The same, without a model:
+$statuses = SObjects::getPicklistValues('Lead', 'Status');
 ```
+
+## Request Headers
+
+To send extra headers with insert and update requests, for example to skip assignment rules, set `$custom_headers` on the model:
 
 ```php
-// Provide a salesforce object name, IE Lead
-
-$statusValue = SObjects::getPicklistValues('Lead', 'Status');
+$lead->custom_headers = ['Sforce-Auto-Assign' => 'FALSE'];
+$lead->save();
 ```
 
-## Local Sync (NEW!)
+## Local Sync
 
-A new trait has been created to make it simple to keep a local DB model in sync with a salesforce object.
-
-Use this if you want to keep a local table, or just some fields, in sync with an SF object. Instead of working directly with SF objects, you can manage a local table as you may be more familiar with, and just keep some data in sync with SalesForce.
+The `SyncsWithSalesforce` trait keeps a model in your own database in sync with a Salesforce object. You work with a local table, and the mapped fields are pushed to Salesforce whenever the model is created or updated.
 
 ```php
 <?php
 
-namespace Lester\EloquentSalesForce;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Lester\EloquentSalesForce\Traits\SyncsWithSalesforce;
+use SETechSolutions\EloquentSalesForce\Traits\SyncsWithSalesforce;
 
 class SalesLead extends Model
 {
-	use SyncsWithSalesforce;
+    use SyncsWithSalesforce;
 
-	protected $salesForceObject = 'Lead'; // Required unless your classname matches the SF object name.
+    // Required unless the class name matches the Salesforce object name.
+    protected $salesForceObject = 'Lead';
 
-	protected $fillable = [ // Typical field def for local db model
-		'email',
-		'firstName',
-		'lastName',
-		'company',
-		'source',
-		'type',
-	];
+    protected $fillable = [
+        'email',
+        'firstName',
+        'lastName',
+        'company',
+    ];
 
-	protected $salesForceFieldMap = [ // Mapping of the SF fields to local fields
-		'Email' => 'email',
-		'FirstName' => 'firstName',
-		'LastName' => 'lastName',
-		'Company' => 'company',
-	];
+    // Salesforce field => local attribute
+    protected $salesForceFieldMap = [
+        'Email' => 'email',
+        'FirstName' => 'firstName',
+        'LastName' => 'lastName',
+        'Company' => 'company',
+    ];
 }
 ```
 
-If you need to perform more complex data manipulation when syncing, just use mutators on your local model and map the SF fields to the mutated fields. Here's an example.
+The table needs a nullable string column for the Salesforce record ID. It is called `salesforce` by default; set `$salesForceIdField` to use another name.
+
+For anything more involved than a one-to-one mapping, map the Salesforce fields to accessors and mutators on your model:
 
 ```php
-  protected $salesForceFieldMap = [ // Mapping of the SF fields to local fields
+protected $salesForceFieldMap = [
     'Email' => 'email',
     'FirstName' => 'first_name',
     'LastName' => 'last_name',
     'Company' => 'company',
-  ];
+];
 
-  public function getFirstNameAttribute()
-  {
+public function getFirstNameAttribute()
+{
     return Str::before($this->name, ' ');
-  }
+}
 
-  public function getLastNameAttribute()
-  {
+public function getLastNameAttribute()
+{
     return Str::after($this->name, ' ');
-  }
+}
 
-  public function setFirstNameAttribute($value)
-  {
+public function setFirstNameAttribute($value)
+{
     $nameParts = explode(' ', $this->attributes['name']);
     $nameParts[0] = $value;
     $this->attributes['name'] = implode(' ', $nameParts);
-  }
+}
 
-  public function setLastNameAttribute($value)
-  {
+public function setLastNameAttribute($value)
+{
     $nameParts = explode(' ', $this->attributes['name']);
     $nameParts[1] = $value;
     $this->attributes['name'] = implode(' ', $nameParts);
-  }
+}
 ```
+
+### Two-way sync
+
+By default changes only flow from your database to Salesforce. To also pull changes made in Salesforce, enable it in the config file and list the models:
+
+```php
+'syncTwoWay' => true,
+'syncPriority' => 'salesforce',
+'syncTwoWayModels' => [
+    App\Models\SalesLead::class,
+],
+```
+
+`syncPriority` decides what happens when the local model has unsaved changes and Salesforce holds a newer version: `salesforce` (Salesforce wins), `local` (local wins), `silent` (skip the sync) or `exception` (throw).
+
+Changes are pulled in two ways:
+
+- `php artisan salesforce:sync` syncs every linked model. Schedule it as often as you need.
+- `POST /api/syncObject/{id}` syncs the models linked to one Salesforce record. Call it from a Flow or an Apex trigger to sync a record as soon as it changes.
+
+The endpoint requires a shared secret. Set `SF_SYNC_SECRET` in `.env` and send the same value in the `X-Salesforce-Sync-Secret` header of the callout. Requests without it are rejected.
 
 ## Custom Objects
 
-To use custom objects (or an object with a special object name, different from the model), set the protected `$table` property in the model.
+For custom objects, or whenever the object name differs from the class name, set `$table`:
 
 ```php
 <?php
 
-namespace App;
+namespace App\Models;
 
-use Lester\EloquentSalesForce\Model;
+use SETechSolutions\EloquentSalesForce\Model;
 
 class TouchPoint extends Model
 {
-	protected $table = 'TouchPoint__c';
-
-	/** Any other overrides **/
+    protected $table = 'TouchPoint__c';
 }
 ```
 
@@ -470,161 +498,219 @@ class TouchPoint extends Model
 
 ## Batch Queries
 
-SalesForce has API limits. We know this. It sucks. For us at least. So now in the package, you can batch several queries and make a single API call to execute them, and get the results back in a handy collection object.
+Salesforce limits the number of API calls you can make. To spend fewer of them, queue several queries and send them in one call.
 
-At the end of most queries we commonly call `get()` to retrieve the results of our assembled query. We can queue up a batch call by calling `batch()` instead of `get()`. After queuing up the desired queries, you can call `SObjects::runBatch()` and it will return the results of the batched queries in an array.
+Call `batch()` instead of `get()` to queue a query, then `SObjects::runBatch()` to run everything that was queued:
 
 ```php
-Lead::select(['Id', 'FirstName', 'Company'])->limit(100)->batch(); // instead of get.
+Lead::select(['Id', 'FirstName', 'Company'])->limit(100)->batch();
 
 Contact::select(['Id', 'FirstName', 'Phone'])->limit(50)->batch();
 
 $batch = SObjects::runBatch();
 
-$leads = $batch->results('Lead_0'); // get() also works here...
-$contacts = $batch->results('Contact_1'); // ... and here.
+$leads = $batch->results('Lead_0'); // get() also works
+$contacts = $batch->results('Contact_1');
 ```
 
-By default, each batch query is tagged with the name of the model that is being queried with the array index appended after an underscore. For example if you batch a query for the model class called `Prospects` (even if it maps to the SF Lead object), and its the first batched query, the tag of the batch will be `Prospects_0`. To reduce confusion, we recommend tagging the batch when you queue it if you're batching multiple queries on the same object.
+Each query is tagged with the class name of its model and its position in the batch. Pass your own tag when you batch several queries on the same model:
 
 ```php
-Lead::select(['Id', 'FirstName', 'Company'])->limit(100)->batch(); // Will be tagged as Lead_0
+Lead::select(['Id', 'FirstName', 'Company'])->limit(100)->batch(); // Lead_0
 
-Lead::select(['Id', 'FirstName', 'Company'])->limit(30)->where('Company', 'Test')->batch('test_company');
+Lead::select(['Id', 'FirstName', 'Company'])->where('Company', 'Test')->batch('test_company');
 
 $batch = SObjects::runBatch();
 
-$firstCentLeads = $batch->get('Lead_0');
+$leads = $batch->get('Lead_0');
 $testCompanyLeads = $batch->get('test_company');
-
 ```
+
+Up to 25 queries go into one API call; larger batches are split. A query that fails does not fail the batch: its result is the error response from Salesforce instead of a collection.
 
 ## Batch Collection Object
 
-The batch collection object can be used independently of the facade if you'd like to create a batch over time and then execute later. When using the `batch()` method on the query builder, the assembled query builder is added to a collection on the facade. You can either run that batch collection by using the method `SObjects::runBatch()` or you can access the collection by returning `SObjects::getBatch()`. If you have the object stored in a variable, you can run it with `->run()` or you can add more query builders to it with `->batch`
+To build a batch of your own instead of using the shared one, create a `SOQLBatch`:
 
 ```php
-$batchCollection = new SOQLBatch();
+use SETechSolutions\EloquentSalesForce\Database\SOQLBatch;
 
-$batchCollection->batch(Lead::where('FirstName', 'like', 'Test%'));
+$batch = new SOQLBatch();
 
-$batchCollection->run();
+$batch->batch(Lead::where('FirstName', 'like', 'Test%'), 'test_leads');
+$batch->query(Lead::where('Company', 'Acme'), Contact::where('LastName', 'Smith'));
 
+$batch->run();
 ```
+
+`SObjects::getBatch()` returns the shared batch.
 
 ## Bulk Insert
 
 ```php
 $leads = collect([
-	new Lead(['Email' => 'email1@test.com']),
-	new Lead(['Email' => 'email2@test.com'])
+    new Lead(['LastName' => 'One', 'Company' => 'Acme']),
+    new Lead(['LastName' => 'Two', 'Company' => 'Acme']),
 ]);
 
-Lead::insert($leads);
+$inserted = Lead::insert($leads);
 ```
+
+Arrays of attributes work too. The inserted models are returned with their new IDs. Records are sent 200 at a time, the most Salesforce accepts per call.
 
 ## Bulk Update
 
-The bulk update method is model agnostic - meaning that this capability, within salesforce, accepts a mix of object types in the collection that gets sent. So this method therefore exists in the new SObjects facade.
+To update every record matching a query:
 
 ```php
-$accounts = Account::where('Company', 'Test Company')->get(); // collection of accounts.
+Account::where('Industry', 'Banks')->update(['Industry' => 'Banking']);
+```
 
-$accounts = $accounts->map(function($account) {
-	$account->Company = 'New Company Name';
-	return $account;
+To update a collection of models with different values, change them and pass them to the facade. Only the fields that changed are sent, and the collection may mix object types:
+
+```php
+$accounts = Account::where('Industry', 'Banking')->get();
+
+$accounts->each(function ($account) {
+    $account->Rating = 'Hot';
 });
 
-SObjects::update($accounts); // Sends all these objects to SF with updates.
+$results = SObjects::update($accounts);
 ```
 
-SalesForce will execute each update individually and will not fail the batch if any individual update fails. If you want success to be dependent on all updates succeeding (all or nothing), then you can pass `true` as the second parameter. If this is set, the batch of updates must all succeed, or none will.
+Salesforce handles each record on its own, so one failure does not stop the others. `$results` holds the outcome per record. Pass `true` as the second argument to make it all or nothing:
 
 ```php
-SObjects::update($accounts, true); // All or none.
+SObjects::update($accounts, true);
 ```
 
-## Bulk Delete
+Model events are not fired for bulk operations.
 
-Run it on a query if you need to...
+## Bulk Delete
 
 ```php
 Lead::where('Email', 'like', '%@test.com')->delete();
 
-// Lets go nuclear!!!!
+// Every record of the object:
 Lead::truncate();
 ```
 
 # The SObjects Facade
-This is a new feature to the package. The SObjects facade serves the purpose of exposing any global features not model specific, such as authentication and mass updates, but also it is a pass-thru mechanism for the Forrest facade.
 
-Any methods such as get, post, patch, resources, etc will pass through to the Forrest facade and accept parameters respectively.
+The `SObjects` facade holds everything that is not tied to one model, and forwards any other call to the REST API. `SObjects::query()`, `SObjects::search()`, `SObjects::limits()`, `SObjects::sobjects()` and the other resources of [omniphx/forrest](https://github.com/omniphx/forrest) are all available.
 
 ## Authentication
-The `authenticate()` method in the facade will return the token information that has been stored in cache/session.
+
+`SObjects::authenticate()` makes sure a token exists and returns the token data. You do not need to call it yourself: requests authenticate when needed.
+
+With the WebServer flow, send the user to `/login/salesforce`. After they approve access, Salesforce returns them to `/login/salesforce/callback`, which stores the token and redirects to `eloquent_sf.routes.login.redirectTo`.
 
 ## Anonymous Objects
-Sometimes you want to grab a record from SalesForce casually without having to pre-generate a model for it. Now you can do that easily with the `object` method on the facade. Example:
+
+To work with a record without writing a model for its object, use `SalesForceObject`:
 
 ```php
-$queryResult = SObjects::query("Select Id, FirstName from Lead where Email like 'test@%'");
-
-$leads = collect($queryResult['records'])->map(function($record) {
-	return SObjects::object($record);
-});
-
-```
-
-The class used for each object returned will be `Lester\EloquentSalesForce\SalesForceObject`.
-
-You can also query directly against the object like so:
-
-```php
+use SETechSolutions\EloquentSalesForce\SalesForceObject;
 
 $leads = SalesForceObject::select('Email', 'Id')->from('Lead')->get();
-
 ```
 
-## Pick list choices
-You can get the possible pick list values from a dropdown by using this method on the facade.
+Or turn the records of a raw query into models:
 
 ```php
-$listValues = SObjects::getPicklistValues('Lead', 'Status');
+$result = SObjects::query("SELECT Id, FirstName FROM Lead WHERE Email LIKE 'test@%'");
+
+$leads = collect($result['records'])->map(fn ($record) => SObjects::object($record));
+```
+
+## IDs
+
+`SObjects::convert()` turns a 15-character ID into its 18-character form:
+
+```php
+SObjects::convert('5003000000D8cuI'); // 5003000000D8cuIAAR
 ```
 
 ## Logging
-You can set a different log channel for the SOQL actions by specifying `SOQL_LOG=` in your `.env` file.
+
+Queries and write operations are logged at the `info` level. Choose the log channel with `SOQL_LOG=` in your `.env` file, or set it to `false` to turn the logging off.
+
+Queries also dispatch Laravel's `QueryExecuted` event, so they appear in `DB::listen()`, Telescope and Debugbar. `SObjects::queryHistory()` returns everything that was sent during the current request.
+
+## Errors
+
+A failed request throws `SETechSolutions\EloquentSalesForce\Exceptions\RestAPIException`. Its `errorCode` and `fields` properties hold what Salesforce reported. Three errors have an exception class of their own, each extending `RestAPIException`:
+
+- `MalformedQueryException`
+- `RequestLimitExceeded`
+- `UnableToLockRowException`
 
 # Testing
 
-The tests in this package are meant for contributors and have been written to be executed independently of a Laravel application. They will not work as part of the applications testing flow.
+## Testing your application
 
-Create a `.env` file that includes the SalesForce credentials for your test instance, or else the test will fail to execute. The `.env` field should include these properties:
+`SObjects::fake()` replaces Salesforce with an in-memory fake for the rest of the test. No request leaves your application.
 
-```txt
-USERNAME=
-PASSWORD=
-CONSUMER_KEY=
-CONSUMER_SECRET=
-LOGIN_URL=https://login.salesforce.com
-CACHE_DRIVER=array
-LOG_CHANNEL=file
+```php
+use SETechSolutions\EloquentSalesForce\Facades\SObjects;
+
+public function test_a_lead_can_be_qualified(): void
+{
+    $salesforce = SObjects::fake([
+        'Lead' => [
+            ['Id' => '00Q000000000001AAA', 'Company' => 'Acme', 'Status' => 'Open'],
+        ],
+    ]);
+
+    $this->post('/leads/00Q000000000001AAA/qualify')->assertOk();
+
+    $salesforce->assertUpdated('Lead', '00Q000000000001AAA', ['Status' => 'Qualified']);
+}
 ```
 
-Dependencies are required, so execute `composer install`
+Queries return the records you stub for their object. The fake does not evaluate `WHERE` clauses, so every query on an object returns all records stubbed for it. When a test needs different answers for different queries, stub them by statement:
 
-To execute, run `composer test`
+```php
+$salesforce->records('Lead', [...]);
+
+// A wildcard pattern, compared case-insensitively...
+$salesforce->whenQuery("* from Lead where Email = 'none@example.com'*", []);
+
+// ...or a closure. The response can also be an exception to throw.
+$salesforce->whenQuery(
+    fn (string $soql) => str_contains($soql, 'FOR UPDATE'),
+    new MalformedQueryException('unexpected token'),
+);
+```
+
+Inserts return generated IDs. Everything that is sent is recorded:
+
+| Method | Asserts that |
+|---|---|
+| `assertQueried($statement)` | a statement was queried (exact, wildcard or closure) |
+| `assertNotQueried($statement)` | a statement was not queried |
+| `assertQueryCount($count)` | this many statements were queried |
+| `assertCreated($object, $attributes)` | a record was inserted with these attributes |
+| `assertNotCreated($object)` | no record of the object was inserted |
+| `assertUpdated($object, $id, $attributes)` | a record was updated with these attributes |
+| `assertDeleted($id)` | a record was deleted |
+| `assertNothingWritten()` | nothing was inserted, updated or deleted |
+| `assertNothingSent()` | no request was made at all |
+
+`$attributes` can be an array of the values that must be present, or a closure that receives everything that was sent. `queries()` and `recorded()` return the raw log.
+
+Further stubs: `describes($object, $description)` for describe calls and picklists, `layout($object, $fields)` for models without `$columns`, and `resource($method, $response)` for any other REST resource.
+
+## Testing the package
+
+See the [contribution guide](https://github.com/SETechSolutions/eloquent-sales-force/blob/main/CONTRIBUTING.md). The package's own tests run offline.
 
 # Security
 
-If you discover any security related issues, please email
-instead of using the issue tracker.
+Please report vulnerabilities privately through the repository's [Security tab](https://github.com/SETechSolutions/eloquent-sales-force/security/advisories/new) instead of the issue tracker.
 
 # Credits
 
-- [Rob Lester](https://github.com/roblesterjr04/EloquentSalesForce)
-- [Omniphx/Forrest SalesForce for Laravel](https://github.com/omniphx/forrest)
-- [All contributors](https://github.com/roblesterjr04/EloquentSalesForce/graphs/contributors)
-
-This package is bootstrapped with the help of
-[melihovv/laravel-package-generator](https://github.com/melihovv/laravel-package-generator).
+- [Rob Lester](https://github.com/roblesterjr04), who created the package and maintained it through version 2.16
+- [Everyone who contributed to the original project](https://github.com/roblesterjr04/EloquentSalesForce/graphs/contributors)
+- [omniphx/forrest](https://github.com/omniphx/forrest)
