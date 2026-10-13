@@ -310,12 +310,10 @@ class SOQLGrammar extends Grammar
      */
     protected function compileJoins(Builder $query, $joins)
     {
-        return collect($joins)->map(function ($join) {
-            $table = $join->table;
+        return collect($joins)->map(function ($join) use ($query) {
+            [$object, $relationship] = $this->resolveChildRelationship($query, $join);
 
-            $columns = collect(SObjects::objectFields($table, $join->columns ?: ['*']))->implode(',');
-
-            $relationship = $this->unWrapValue($this->grammarPlural($table));
+            $columns = collect(SObjects::objectFields($object, $join->columns ?: ['*']))->implode(',');
 
             $subselect = "select $columns from {$relationship}";
 
@@ -329,6 +327,67 @@ class SOQLGrammar extends Grammar
 
             return ", ($subselect)";
         })->implode(' ');
+    }
+
+    /**
+     * Work out the child object and the child relationship name of a join.
+     *
+     * The join may name the child object ("Contact"), the relationship
+     * ("Contacts", "Children__r") or both ("Contact as Contacts"). The
+     * missing half is looked up in the parent's describe result, and the
+     * old guess (the plural of the object name) is the last resort.
+     *
+     * @return array{0: string, 1: string}
+     */
+    protected function resolveChildRelationship(Builder $query, $join): array
+    {
+        $table = $this->unWrapValue((string) $join->table);
+
+        if (preg_match('/^\s*(\S+)\s+as\s+(\S+)\s*$/i', $table, $matches) === 1) {
+            return [$matches[1], $matches[2]];
+        }
+
+        $field = $join->wheres[0]['first'] ?? null;
+        $field = is_string($field) ? Str::afterLast($field, '.') : null;
+
+        foreach ($this->childRelationships($query) as $child) {
+            $object = $child['childSObject'] ?? null;
+            $name = $child['relationshipName'] ?? null;
+
+            if (! $object || ! $name) {
+                continue;
+            }
+
+            if (strcasecmp($name, $table) === 0) {
+                return [$object, $name];
+            }
+
+            if (strcasecmp($object, $table) === 0 && (! $field || strcasecmp((string) ($child['field'] ?? ''), $field) === 0)) {
+                return [$object, $name];
+            }
+        }
+
+        return [$table, $this->grammarPlural($table)];
+    }
+
+    /**
+     * The child relationships of the queried object.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function childRelationships(Builder $query): array
+    {
+        $from = is_string($query->from) ? $query->from : null;
+
+        if (! $from) {
+            return [];
+        }
+
+        try {
+            return (array) (SObjects::describe($from)['childRelationships'] ?? []);
+        } catch (\Throwable) {
+            return [];
+        }
     }
 
     /**

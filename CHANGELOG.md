@@ -6,7 +6,7 @@ Releases up to 2.16.0 were published as [`rob-lester-jr04/eloquent-sales-force`]
 
 ## [Unreleased]
 
-## [3.0.0]
+## [3.0.0] - 2026-10-14
 
 First release of the maintained continuation. See [UPGRADE.md](UPGRADE.md) for upgrade steps.
 
@@ -50,6 +50,10 @@ First release of the maintained continuation. See [UPGRADE.md](UPGRADE.md) for u
 - Batch sub-requests were sent without the `v` version prefix when a version was configured.
 - `select('*')` and `cursor()` produced invalid SOQL for models without `$columns`.
 - `make:salesforce --pivot` referenced a stub that did not exist.
+- `join()` used a guessed child relationship name, which is wrong for custom objects (`Children__r`). The name is now read from Salesforce, and can also be given directly: `join('Children__r', ...)` or `join('Child__c as Children__r', ...)`.
+- Two-way sync read the Salesforce record without the mapped fields, so local values could be overwritten with null.
+- With `syncPriority` set to `local`, Salesforce values still overwrote unsaved local changes.
+- `syncDifferences()` compared the wrong keys.
 - The test suite could not be run because of redeclared PHPUnit functions. ([#55](https://github.com/roblesterjr04/EloquentSalesForce/issues/55))
 
 ### Security

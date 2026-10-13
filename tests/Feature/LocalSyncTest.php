@@ -82,6 +82,41 @@ class LocalSyncTest extends TestCase
         $this->assertSame('Ada King', $model->fresh()->name);
     }
 
+    public function test_two_way_sync_reads_exactly_the_mapped_fields(): void
+    {
+        config(['eloquent_sf.syncTwoWay' => true]);
+
+        $model = $this->linkedModel();
+
+        $this->salesforce->records('Lead', [['Id' => self::LEAD, 'LastModifiedDate' => now()->subDay()->format('Y-m-d\TH:i:s.vO')]]);
+
+        $model->syncWithSalesforce();
+
+        $this->salesforce->assertQueried("select Id, LastModifiedDate, Email, FirstName, LastName, Company from Lead where Id = '".self::LEAD."' limit 1");
+    }
+
+    public function test_local_priority_keeps_unsaved_local_changes(): void
+    {
+        config(['eloquent_sf.syncTwoWay' => true, 'eloquent_sf.syncPriority' => 'local']);
+
+        $model = $this->linkedModel();
+        $model->email = 'mine@example.com';
+
+        $this->salesforce->records('Lead', [[
+            'Id' => self::LEAD,
+            'Email' => 'theirs@example.com',
+            'FirstName' => 'Ada',
+            'LastName' => 'Lovelace',
+            'Company' => 'Analytical',
+            'LastModifiedDate' => now()->addHour()->format('Y-m-d\TH:i:s.vO'),
+        ]]);
+
+        $model->syncWithSalesforce();
+
+        $this->assertSame('mine@example.com', $model->email);
+        $this->salesforce->assertUpdated('Lead', self::LEAD, ['Email' => 'mine@example.com']);
+    }
+
     public function test_two_way_sync_ignores_older_salesforce_values(): void
     {
         config(['eloquent_sf.syncTwoWay' => true]);

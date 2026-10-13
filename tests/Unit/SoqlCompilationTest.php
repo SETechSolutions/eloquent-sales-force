@@ -395,6 +395,26 @@ class SoqlCompilationTest extends TestCase
         );
     }
 
+    public function test_joins_use_the_relationship_name_salesforce_reports(): void
+    {
+        $this->salesforce->describes('Account__c', ['childRelationships' => [
+            ['childSObject' => 'Contact__c', 'field' => 'Owner__c', 'relationshipName' => 'Owned__r'],
+            ['childSObject' => 'Contact__c', 'field' => 'Account__c', 'relationshipName' => 'Contacts__r'],
+        ]]);
+        $this->salesforce->layout('Contact__c', ['Email__c']);
+
+        $account = new class extends TestLead
+        {
+            protected $table = 'Account__c';
+        };
+
+        $expected = 'select Id , (select Id,CreatedDate,LastModifiedDate,IsDeleted,Email__c from Contacts__r) from Account__c';
+
+        $this->assertSame($expected, $account->newQuery()->select('Id')->join('Contact__c', 'Account__c')->toSql(), 'by child object and field');
+        $this->assertSame($expected, $account->newQuery()->select('Id')->join('Contacts__r', 'Account__c')->toSql(), 'by relationship name');
+        $this->assertSame($expected, $account->newQuery()->select('Id')->join('Contact__c as Contacts__r', 'Account__c')->toSql(), 'both given');
+    }
+
     public function test_lock_for_update(): void
     {
         $this->assertSame(

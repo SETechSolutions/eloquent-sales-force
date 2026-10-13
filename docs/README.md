@@ -351,6 +351,14 @@ $account = Account::join('Contact', 'AccountId')->first();
 $contacts = $account->Contacts['records'];
 ```
 
+The relationship name is looked up in Salesforce. For custom relationships you can also name it yourself:
+
+```php
+$parent = Project__c::join('Task__c as Tasks__r', 'Project__c')->first();
+
+$tasks = $parent->Tasks__r['records'];
+```
+
 The child records come back as arrays under the relationship name, not as models.
 
 ## ReadOnly Fields

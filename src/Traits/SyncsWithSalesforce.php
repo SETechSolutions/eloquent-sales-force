@@ -20,24 +20,26 @@ trait SyncsWithSalesforce
 
     public function syncWithSalesforce()
     {
-        if ($object = $this->syncTwoWay()) {
-            if ($this->isDirty()) {
-                $whatToDo = config('eloquent_sf.syncPriority', 'salesforce');
-                $differences = $this->syncDifferences($object);
-                switch ($whatToDo) {
-                    case 'exception':
-                        throw new \Exception('Sync Conflict');
-                        break;
-                    case 'silent':
-                        return $this;
-                        break;
-                    case 'salesforce':
-                        $this->fill($object->only($differences));
-                        break;
-                }
+        $object = $this->syncTwoWay();
 
+        // The record is read once per sync, so the next sync sees fresh data.
+        $this->tempSyncObject = null;
+
+        if ($object) {
+            // Unsaved local changes while Salesforce holds a newer version.
+            $conflict = $this->isDirty();
+
+            switch ($conflict ? config('eloquent_sf.syncPriority', 'salesforce') : 'salesforce') {
+                case 'exception':
+                    throw new \Exception('Sync Conflict');
+                case 'silent':
+                    return $this;
+                case 'local':
+                    // Keep the local values; they are pushed below.
+                    break;
+                default:
+                    $this->syncSalesforceToLocal($object);
             }
-            $this->syncSalesforceToLocal($object);
         }
 
         return $this->syncLocalToSalesforce();
@@ -120,18 +122,24 @@ trait SyncsWithSalesforce
     private function syncTempObject()
     {
         if ($this->tempSyncObject === null) {
-
             $sfModel = new SalesForceObject([
-                'Id' => $this->{$this->getSalesforceIdField()},
                 'attributes' => [
                     'type' => $this->getSalesforceObjectName(),
                 ],
-            ] + $this->getSalesforceSyncedValues());
+            ]);
 
-            $this->tempSyncObject = $sfModel->refresh();
+            // Select exactly the mapped fields; the object's default fields
+            // need not include them.
+            $this->tempSyncObject = $sfModel->newQuery()
+                ->select(array_values(array_unique(array_merge(
+                    ['Id', 'LastModifiedDate'],
+                    array_keys($this->getSalesforceMapping())
+                ))))
+                ->where('Id', $this->{$this->getSalesforceIdField()})
+                ->first() ?: false;
         }
 
-        return $this->tempSyncObject;
+        return $this->tempSyncObject ?: null;
     }
 
     public function syncTwoWay()
@@ -139,7 +147,7 @@ trait SyncsWithSalesforce
         if (config('eloquent_sf.syncTwoWay') && ($id = $this->{$this->getSalesforceIdField()}) !== null) {
             $sfModel = $this->syncTempObject();
 
-            return $this->syncSalesforceIsNewer($sfModel) ? $sfModel : false;
+            return $sfModel && $this->syncSalesforceIsNewer($sfModel) ? $sfModel : false;
         }
 
         return false;
@@ -147,11 +155,25 @@ trait SyncsWithSalesforce
 
     public function syncDifferences($object)
     {
-        return array_keys(array_diff($this->getSalesforceSyncedValues(), $object->only(array_values($this->getSalesforceMapping()))));
+        $remote = $object->only(array_keys($this->getSalesforceMapping()));
+
+        return array_keys(array_filter(
+            $this->getSalesforceSyncedValues(),
+            fn ($value, $field) => ($remote[$field] ?? null) != $value,
+            ARRAY_FILTER_USE_BOTH
+        ));
     }
 
     public function syncSalesforceIsNewer($object)
     {
-        return strtotime($object->LastModifiedDate) > $this->updated_at->timestamp;
+        $remote = $object->LastModifiedDate;
+
+        if (! $remote || ! $this->updated_at) {
+            return (bool) $remote;
+        }
+
+        $remote = $remote instanceof \DateTimeInterface ? $remote->getTimestamp() : strtotime((string) $remote);
+
+        return $remote > $this->updated_at->getTimestamp();
     }
 }
