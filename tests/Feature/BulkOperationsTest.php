@@ -40,6 +40,14 @@ class BulkOperationsTest extends TestCase
         $this->assertInstanceOf(TestLead::class, $inserted->first());
     }
 
+    public function test_bulk_insert_accepts_a_single_attribute_array(): void
+    {
+        $inserted = TestLead::insert(['LastName' => 'One', 'Company' => 'Acme']);
+
+        $this->assertCount(1, $inserted);
+        $this->salesforce->assertCreated('Lead', ['LastName' => 'One', 'Company' => 'Acme']);
+    }
+
     public function test_bulk_insert_is_split_into_requests_of_at_most_200_records(): void
     {
         $requests = 0;

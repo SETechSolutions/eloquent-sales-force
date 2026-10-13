@@ -1,0 +1,40 @@
+name: Live Salesforce tests
+
+# Runs the suite that talks to a real org. It creates and deletes Lead and
+# Task records, so the secrets must belong to a Developer Edition org or a
+# sandbox, never to production.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    environment: salesforce
+
+    env:
+      SF_CONSUMER_KEY: ${{ secrets.SF_CONSUMER_KEY }}
+      SF_CONSUMER_SECRET: ${{ secrets.SF_CONSUMER_SECRET }}
+      SF_USERNAME: ${{ secrets.SF_USERNAME }}
+      SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+      SF_LOGIN_URL: ${{ vars.SF_LOGIN_URL || 'https://login.salesforce.com' }}
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v5
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, intl
+          coverage: none
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v3
+
+      - name: Run the live tests
+        run: vendor/bin/phpunit --testsuite Live

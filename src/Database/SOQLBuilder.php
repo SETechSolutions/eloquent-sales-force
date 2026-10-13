@@ -5,6 +5,7 @@ namespace Lester\EloquentSalesForce\Database;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Lester\EloquentSalesForce\Facades\SObjects;
 use Lester\EloquentSalesForce\Model;
@@ -183,6 +184,11 @@ class SOQLBuilder extends Builder
     public function insert($collection)
     {
         $table = $this->model->getTable();
+
+        // A single record given as an attribute array, as Eloquent allows.
+        if (is_array($collection) && Arr::isAssoc($collection)) {
+            $collection = [$collection];
+        }
 
         $models = Collection::make($collection)->values()->map(function ($record) {
             return $record instanceof Model ? $record : $this->model->newInstance((array) $record);

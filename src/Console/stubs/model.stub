@@ -7,5 +7,15 @@ use Lester\EloquentSalesForce\Model;
 
 class {{ class }} extends Model
 {
-	use HasFactory;
+    use HasFactory;
+
+    /**
+     * The fields selected by default.
+     *
+     * Leave empty to select the fields of the object's compact layout,
+     * which costs one extra API call per query.
+     *
+     * @var array<int, string>
+     */
+    public $columns = [];
 }

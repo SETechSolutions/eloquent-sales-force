@@ -21,7 +21,6 @@
     ],
     "require": {
         "php": "^8.2",
-        "guzzlehttp/guzzle": "^7.8",
         "laravel/framework": "^12.0 || ^13.0",
         "omniphx/forrest": "^3.0"
     },
