@@ -1,65 +1,63 @@
 {
-  "name": "rob-lester-jr04/eloquent-sales-force",
-  "description": "An eloquent model data source for Salesforce",
-  "license": "MIT",
-  "keywords": [
-    "eloquent",
-    "sales",
-    "force",
-    "salesforce",
-    "model",
-    "laravel",
-    "forrest",
-    "soql"
-  ],
-  "type": "library",
-  "authors": [
-    {
-      "name": "Robert Lester",
-      "email": "roblesterjr04@gmail.com"
-    }
-  ],
-  "require": {
-    "php": "^7.4 || ^8.0 || ^8.1",
-    "guzzlehttp/guzzle": "^6.0 || ^7.0",
-    "laravel/framework": "^6.0 || ^7.0 || ^8.40.0 || ^9.0 || ^10.0 || ^11.0" ,
-    "omniphx/forrest": "^2.0"
-  },
-  "require-dev": {
-    "laravel/dusk": "^6.19 || ^7.0 || ^8.0",
-    "orchestra/testbench": "^3.8 || ^4.0 || ^5.0 || ^6.0 || ^7.0 || ^8.0 || ^9.0",
-    "phpunit/phpunit": ">=6.0 || >=10.0"
-  },
-  "autoload": {
-    "psr-4": {
-      "Lester\\EloquentSalesForce\\": "src"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Lester\\EloquentSalesForce\\Tests\\": "tests"
-    },
-    "files": [
-      "vendor/phpunit/phpunit/src/Framework/Assert/Functions.php"
-    ]
-  },
-  "scripts": {
-    "test": "vendor/bin/phpunit --bootstrap=./vendor/autoload.php",
-    "post-autoload-dump": [
-        "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump"
+    "name": "rob-lester-jr04/eloquent-sales-force",
+    "description": "An eloquent model data source for Salesforce",
+    "license": "MIT",
+    "keywords": [
+        "eloquent",
+        "sales",
+        "force",
+        "salesforce",
+        "model",
+        "laravel",
+        "forrest",
+        "soql"
     ],
-    "docs": "docsify serve ./docs"
-  },
-  "extra": {
-    "laravel": {
-      "providers": [
-        "Lester\\EloquentSalesForce\\ServiceProvider"
-      ]
+    "type": "library",
+    "authors": [
+        {
+            "name": "Robert Lester",
+            "email": "roblesterjr04@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "guzzlehttp/guzzle": "^7.8",
+        "laravel/framework": "^12.0 || ^13.0",
+        "omniphx/forrest": "^3.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^10.0 || ^11.0",
+        "phpunit/phpunit": "^11.5 || ^12.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lester\\EloquentSalesForce\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Lester\\EloquentSalesForce\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "lint": "pint --test",
+        "format": "pint",
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "docs": "docsify serve ./docs"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Lester\\EloquentSalesForce\\ServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "optimize-autoloader": true
     }
-  },
-  "config": {
-    "preferred-install": "dist",
-    "sort-packages": true,
-    "optimize-autoloader": true
-  }
 }
